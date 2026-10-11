@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\CartController;
 use App\Http\Controllers\Public\CatalogController;
@@ -8,7 +10,6 @@ use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\PageController;
 use App\Http\Controllers\Public\SitemapController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Rutas Públicas (Blade + Tailwind + Alpine.js — Renderizado en Servidor por SEO)
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -32,9 +33,25 @@ Route::get('/terminos-y-condiciones', [PageController::class, 'terms'])->name('p
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Redirección de compatibilidad /dashboard -> /admin
+Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
+    ->middleware(['auth'])
+    ->name('dashboard');
+
+// Administración (/admin — Vue 3 + Inertia + Vite, protegido por sesión autenticada)
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Ruta base de Artículos (el CRUD completo se conecta en el Sub-paso 5B)
+        Route::get('/articulos', [DashboardController::class, 'index'])->name('products.index');
+
+        Route::get('/pedidos', [PlaceholderModuleController::class, 'orders'])->name('orders.index');
+        Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
+        Route::get('/configuracion', [PlaceholderModuleController::class, 'settings'])->name('settings.index');
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

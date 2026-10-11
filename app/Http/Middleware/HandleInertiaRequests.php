@@ -34,6 +34,15 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'business' => [
+                'name' => config('business.name', 'JC Autopartes'),
+                'city' => config('business.city', 'Tepatitlán de Morelos, Jalisco'),
+                'whatsapp_display' => config('business.whatsapp_display', '33 3166 5290'),
+            ],
         ];
     }
 }
