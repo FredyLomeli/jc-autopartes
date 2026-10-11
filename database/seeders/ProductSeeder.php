@@ -18,13 +18,31 @@ class ProductSeeder extends Seeder
 
     public function run(): void
     {
-        $placeholderMap = [
-            'Motores' => 'imagenes/placeholders/motores.svg',
-            'Transmisiones' => 'imagenes/placeholders/transmisiones.svg',
-            'Partes Internas' => 'imagenes/placeholders/partes-internas.svg',
-            'Colision' => 'imagenes/placeholders/colision.svg',
-            'Suspension' => 'imagenes/placeholders/suspension.svg',
-            'Electrico' => 'imagenes/placeholders/electrico.svg',
+        $photoPoolByCategory = [
+            'Motores' => [
+                'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80',
+            ],
+            'Transmisiones' => [
+                'https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=80',
+            ],
+            'Partes Internas' => [
+                'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80',
+            ],
+            'Colision' => [
+                'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+            ],
+            'Suspension' => [
+                'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?auto=format&fit=crop&w=800&q=80',
+            ],
+            'Electrico' => [
+                'https://images.unsplash.com/photo-1625047509168-a7026f36de04?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=800&q=80',
+            ],
         ];
 
         $items = [
@@ -77,7 +95,7 @@ class ProductSeeder extends Seeder
             ['sku' => 'JC-VW-006', 'title' => 'Módulo Electroventilador Doble Volkswagen Tiguan 1.4L TSI', 'category' => 'Electrico', 'brand' => 'Volkswagen', 'model' => 'Tiguan', 'ys' => 2018, 'ye' => 2022, 'cond' => 'A', 'price' => 3100.00, 'stock' => 1, 'w' => 5.2, 'h' => 14.0, 'wi' => 48.0, 'l' => 74.0, 'status' => 'draft', 'featured' => false, 'desc' => 'Tolva con motoventiladores originales VW en borrador de revisión de almacén.'],
         ];
 
-        foreach ($items as $item) {
+        foreach ($items as $index => $item) {
             $slug = Str::slug($item['title'] . '-' . $item['sku']);
 
             $product = Product::query()->updateOrCreate(
@@ -105,7 +123,10 @@ class ProductSeeder extends Seeder
             $this->priceService->setPrice($product, $item['price']);
             $this->stockService->setStock($product, $item['stock']);
 
-            $primarySvg = $placeholderMap[$item['category']] ?? 'imagenes/placeholders/colision.svg';
+            $pool = $photoPoolByCategory[$item['category']] ?? [
+                'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80',
+            ];
+            $primaryPhotoUrl = $pool[$index % count($pool)];
 
             ProductPhoto::query()->updateOrCreate(
                 [
@@ -113,7 +134,7 @@ class ProductSeeder extends Seeder
                     'sort_order' => 1,
                 ],
                 [
-                    'path' => $primarySvg,
+                    'path' => $primaryPhotoUrl,
                     'alt_text' => "{$item['title']} — Vista principal",
                 ]
             );

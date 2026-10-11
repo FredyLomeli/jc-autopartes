@@ -1,20 +1,22 @@
 @extends('layouts.public', [
     'title' => 'Inicio — Autopartes y Refacciones Originales Usadas',
     'metaDescription' => 'Encuentra motores, transmisiones, colisión, suspensión y partes eléctricas originales usadas con garantía escrita de 7 a 30 días en JC Autopartes, Tepatitlán, Jalisco.',
-    'canonicalUrl' => url('/'),
+    'canonicalUrl' => route('home'),
 ])
 
 @php
     $business = config('business');
     $brandOptions = $brands ?? ['Nissan', 'Chevrolet', 'Toyota', 'Ford', 'Honda', 'Volkswagen'];
-    $yearOptions = range((int) date('Y'), 2005);
+    $modelOptions = $models ?? [];
+    $modelsByBrandMap = $modelsByBrand ?? [];
+    $yearOptions = $years ?? range((int) date('Y'), 2008);
     $categoryCards = $categories ?? [
-        ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => '30 días de garantía', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.'],
-        ['slug' => 'Transmisiones', 'name' => 'Transmisiones Automáticas y Estándar', 'warranty' => '30 días de garantía', 'desc' => 'Cajas de velocidades automáticas, CVT y manuales revisadas.'],
-        ['slug' => 'Partes Internas', 'name' => 'Cabezas y Partes Internas', 'warranty' => '15 días de garantía', 'desc' => 'Cabezas de motor, cigüeñales, árboles de levas y múltiples.'],
-        ['slug' => 'Colision', 'name' => 'Carrocería y Colisión', 'warranty' => '7 días de garantía', 'desc' => 'Cofres, puertas, salpicaderas, fascias, faros, calaveras y espejos.'],
-        ['slug' => 'Suspension', 'name' => 'Suspensión y Dirección', 'warranty' => '7 días de garantía', 'desc' => 'Horquillas, amortiguadores, cajas de dirección, puentes y mangos.'],
-        ['slug' => 'Electrico', 'name' => 'Sistema Eléctrico y Electrónico', 'warranty' => '7 días de garantía', 'desc' => 'Alternadores, marchas, módulos, cuerpos de aceleración y compresores.'],
+        ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => '30 días de garantía', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.', 'count' => 6],
+        ['slug' => 'Transmisiones', 'name' => 'Transmisiones Automáticas y Estándar', 'warranty' => '30 días de garantía', 'desc' => 'Cajas de velocidades automáticas, CVT y manuales revisadas.', 'count' => 6],
+        ['slug' => 'Partes Internas', 'name' => 'Cabezas y Partes Internas', 'warranty' => '15 días de garantía', 'desc' => 'Cabezas de motor, cigüeñales, árboles de levas y múltiples.', 'count' => 6],
+        ['slug' => 'Colision', 'name' => 'Carrocería y Colisión', 'warranty' => '7 días de garantía', 'desc' => 'Cofres, puertas, salpicaderas, fascias, faros, calaveras y espejos.', 'count' => 6],
+        ['slug' => 'Suspension', 'name' => 'Suspensión y Dirección', 'warranty' => '7 días de garantía', 'desc' => 'Horquillas, amortiguadores, cajas de dirección, puentes y mangos.', 'count' => 6],
+        ['slug' => 'Electrico', 'name' => 'Sistema Eléctrico y Electrónico', 'warranty' => '7 días de garantía', 'desc' => 'Alternadores, marchas, módulos, cuerpos de aceleración y compresores.', 'count' => 6],
     ];
     $facilityPhotos = [
         [
@@ -86,9 +88,22 @@
                     </div>
                 </div>
 
-                <!-- Buscador por Vehículo y Pieza -->
+                <!-- Buscador por Vehículo y Pieza (Marca / Modelo / Año / Categoría) -->
                 <div class="lg:col-span-5">
-                    <div class="bg-white text-dark rounded-card p-6 shadow-lg border border-border">
+                    <div
+                        x-data="{
+                            selectedBrand: '',
+                            modelsByBrand: @js($modelsByBrandMap),
+                            allModels: @js($modelOptions),
+                            get availableModels() {
+                                if (this.selectedBrand && this.modelsByBrand[this.selectedBrand]) {
+                                    return this.modelsByBrand[this.selectedBrand];
+                                }
+                                return this.allModels;
+                            }
+                        }"
+                        class="bg-white text-dark rounded-card p-6 shadow-lg border border-border"
+                    >
                         <div class="flex items-center justify-between border-b border-border pb-3 mb-4">
                             <div>
                                 <h2 class="text-lg font-extrabold text-dark">Buscador por Vehículo</h2>
@@ -99,7 +114,7 @@
                             </span>
                         </div>
 
-                        <form action="{{ url('/refacciones') }}" method="GET" class="space-y-3.5">
+                        <form action="{{ route('catalog.index') }}" method="GET" class="space-y-3.5">
                             <div>
                                 <label for="finder-q" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">
                                     Pieza o Número de Parte (SKU)
@@ -121,6 +136,7 @@
                                     <select
                                         id="finder-brand"
                                         name="brand"
+                                        x-model="selectedBrand"
                                         class="w-full rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
                                     >
                                         <option value="">Todas las marcas</option>
@@ -130,6 +146,24 @@
                                     </select>
                                 </div>
 
+                                <div>
+                                    <label for="finder-model" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">
+                                        Modelo
+                                    </label>
+                                    <select
+                                        id="finder-model"
+                                        name="model"
+                                        class="w-full rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                    >
+                                        <option value="">Todos los modelos</option>
+                                        @foreach($modelOptions as $modelName)
+                                            <option value="{{ $modelName }}">{{ $modelName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label for="finder-year" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">
                                         Año Modelo
@@ -145,22 +179,22 @@
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label for="finder-category" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">
-                                    Categoría
-                                </label>
-                                <select
-                                    id="finder-category"
-                                    name="category"
-                                    class="w-full rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
-                                >
-                                    <option value="">Todas las categorías</option>
-                                    @foreach($categoryCards as $cat)
-                                        <option value="{{ $cat['slug'] }}">{{ $cat['name'] }}</option>
-                                    @endforeach
-                                </select>
+                                <div>
+                                    <label for="finder-category" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">
+                                        Categoría
+                                    </label>
+                                    <select
+                                        id="finder-category"
+                                        name="category"
+                                        class="w-full rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                    >
+                                        <option value="">Todas las categorías</option>
+                                        @foreach($categoryCards as $cat)
+                                            <option value="{{ $cat['slug'] }}">{{ $cat['name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
 
                             <button
@@ -186,7 +220,7 @@
                 <span class="text-xs font-bold uppercase tracking-wider text-primary">Líneas de Inventario</span>
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-dark mt-1">Explora por Categoría de Pieza</h2>
             </div>
-            <a href="{{ url('/refacciones') }}" class="text-sm font-bold text-primary hover:underline inline-flex items-center gap-1">
+            <a href="{{ route('catalog.index') }}" class="text-sm font-bold text-primary hover:underline inline-flex items-center gap-1">
                 <span>Ver todo el catálogo</span>
                 <span aria-hidden="true">&rarr;</span>
             </a>
@@ -194,7 +228,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @foreach($categoryCards as $cat)
-                <a href="{{ url('/refacciones?category=' . urlencode($cat['slug'])) }}"
+                <a href="{{ route('catalog.index', ['category' => $cat['slug']]) }}"
                    class="group bg-white rounded-card border border-border p-5 hover:border-primary transition-colors flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between gap-2 mb-3">
@@ -202,7 +236,7 @@
                                 {{ $cat['warranty'] }}
                             </span>
                             <span class="text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
-                                Ver piezas &rarr;
+                                {{ isset($cat['count']) && $cat['count'] > 0 ? $cat['count'] . ' piezas' : 'Ver piezas' }} &rarr;
                             </span>
                         </div>
                         <h3 class="text-lg font-bold text-dark group-hover:text-primary transition-colors">
@@ -217,7 +251,7 @@
         </div>
     </section>
 
-    <!-- Sección de Piezas Destacadas (Lista para conectar con Product en Sub-pasos 2 y 3) -->
+    <!-- Sección de Piezas Destacadas -->
     @if(!empty($featuredProducts) && count($featuredProducts) > 0)
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -225,14 +259,14 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-primary">Recién Ingresadas</span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-dark mt-1">Piezas Destacadas en Inventario</h2>
                 </div>
-                <a href="{{ url('/refacciones') }}" class="text-sm font-bold text-primary hover:underline">
+                <a href="{{ route('catalog.index') }}" class="text-sm font-bold text-primary hover:underline">
                     Ir al listado filtrable &rarr;
                 </a>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($featuredProducts as $item)
-                    @includeIf('public.partials.product-card', ['product' => $item])
+                    @include('public.partials.product-card', ['product' => $item])
                 @endforeach
             </div>
         </section>
@@ -317,7 +351,7 @@
                     Compra con total tranquilidad: contamos con mostrador físico, patio y almacén organizado en {{ $business['address'] }}
                 </p>
             </div>
-            <a href="{{ url('/contacto') }}" class="text-sm font-bold text-primary hover:underline shrink-0">
+            <a href="{{ route('pages.contact') }}" class="text-sm font-bold text-primary hover:underline shrink-0">
                 Ver ubicación y horarios &rarr;
             </a>
         </div>

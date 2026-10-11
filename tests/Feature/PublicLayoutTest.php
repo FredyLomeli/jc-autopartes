@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PublicLayoutTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_home_page_loads_with_blade_layout_and_official_business_data(): void
     {
         $response = $this->get('/');
