@@ -161,7 +161,7 @@
                     <!-- Acciones: Agregar al Carrito y Botón de WhatsApp -->
                     <div class="space-y-3 pt-4 border-t border-border">
                         @if($hasStock)
-                            <form action="{{ url('/carrito/agregar') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
+                            <form action="{{ route('cart.add') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
                                 @csrf
                                 <input type="hidden" name="product_id" value="{{ $product->id }}">
 

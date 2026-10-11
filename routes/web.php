@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\CartController;
 use App\Http\Controllers\Public\CatalogController;
+use App\Http\Controllers\Public\CheckoutController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\PageController;
 use App\Http\Controllers\Public\SitemapController;
@@ -13,6 +15,16 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/refacciones', [CatalogController::class, 'index'])->name('catalog.index');
 Route::get('/refacciones/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
+// Carrito en sesión del servidor y Checkout visual
+Route::get('/carrito', [CartController::class, 'index'])->name('cart.index');
+Route::post('/carrito/agregar', [CartController::class, 'add'])->name('cart.add');
+Route::patch('/carrito/{product}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/carrito/{product}', [CartController::class, 'remove'])->name('cart.remove');
+Route::delete('/carrito', [CartController::class, 'clear'])->name('cart.clear');
+
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+
+// Páginas informativas y legales
 Route::get('/contacto', [PageController::class, 'contact'])->name('pages.contact');
 Route::get('/garantia', [PageController::class, 'warranty'])->name('pages.warranty');
 Route::get('/aviso-de-privacidad', [PageController::class, 'privacy'])->name('pages.privacy');
