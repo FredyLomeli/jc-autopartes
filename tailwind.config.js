@@ -8,12 +8,27 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
+        './resources/js/**/*.js',
     ],
 
     theme: {
         extend: {
+            colors: {
+                primary: {
+                    DEFAULT: 'var(--color-primary)',
+                    hover: 'var(--color-primary-hover)',
+                },
+                dark: 'var(--color-dark)',
+                surface: 'var(--color-surface)',
+                border: 'var(--color-border)',
+                whatsapp: 'var(--color-whatsapp)',
+            },
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
+            },
+            borderRadius: {
+                base: 'var(--radius-base)',
+                card: 'var(--radius-card)',
             },
         },
     },
