@@ -136,6 +136,8 @@ defineProps({
                                         <img
                                             :src="item.photo_url"
                                             :alt="item.title"
+                                            loading="lazy"
+                                            decoding="async"
                                             class="w-11 h-9 rounded object-cover border border-border shrink-0"
                                         />
                                         <div>

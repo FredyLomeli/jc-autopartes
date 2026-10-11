@@ -75,9 +75,13 @@ class Product extends Model
 
     public function getPrimaryPhotoUrlAttribute(): string
     {
-        $photo = $this->relationLoaded('photos')
-            ? $this->photos->first()
-            : $this->primaryPhoto()->first();
+        if ($this->relationLoaded('primaryPhoto')) {
+            $photo = $this->primaryPhoto;
+        } elseif ($this->relationLoaded('photos')) {
+            $photo = $this->photos->first();
+        } else {
+            $photo = $this->primaryPhoto()->first();
+        }
 
         if ($photo) {
             return $photo->url;

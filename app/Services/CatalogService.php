@@ -84,6 +84,28 @@ class CatalogService
     }
 
     /**
+     * Columnas ligeras requeridas por las tarjetas del listado de catálogo.
+     *
+     * @var array<int, string>
+     */
+    private const LISTING_COLUMNS = [
+        'id',
+        'title',
+        'slug',
+        'sku',
+        'category',
+        'vehicle_brand',
+        'vehicle_model',
+        'year_start',
+        'year_end',
+        'condition',
+        'price',
+        'stock',
+        'status',
+        'is_featured',
+    ];
+
+    /**
      * Obtiene las piezas destacadas publicadas para la portada.
      *
      * @return Collection<int, Product>
@@ -91,8 +113,9 @@ class CatalogService
     public function getFeaturedProducts(int $limit = 8): Collection
     {
         return Product::query()
+            ->select(self::LISTING_COLUMNS)
             ->published()
-            ->with('photos')
+            ->with('primaryPhoto')
             ->orderByDesc('is_featured')
             ->orderByDesc('id')
             ->limit($limit)
@@ -107,8 +130,9 @@ class CatalogService
     public function filterProducts(array $filters, int $perPage = 12): LengthAwarePaginator
     {
         $query = Product::query()
+            ->select(self::LISTING_COLUMNS)
             ->published()
-            ->with('photos');
+            ->with('primaryPhoto');
 
         if (! empty($filters['q'])) {
             $search = trim((string) $filters['q']);
@@ -182,8 +206,9 @@ class CatalogService
     public function getRelatedProducts(Product $product, int $limit = 4): Collection
     {
         return Product::query()
+            ->select(self::LISTING_COLUMNS)
             ->published()
-            ->with('photos')
+            ->with('primaryPhoto')
             ->where('id', '!=', $product->id)
             ->where(function ($q) use ($product) {
                 $q->where('vehicle_brand', $product->vehicle_brand)

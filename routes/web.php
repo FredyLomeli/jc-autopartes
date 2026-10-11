@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\CartController;
 use App\Http\Controllers\Public\CatalogController;
@@ -45,8 +46,13 @@ Route::prefix('admin')
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        // Ruta base de Artículos (el CRUD completo se conecta en el Sub-paso 5B)
-        Route::get('/articulos', [DashboardController::class, 'index'])->name('products.index');
+        // CRUD de Artículos (/admin/articulos)
+        Route::get('/articulos', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/articulos/crear', [ProductController::class, 'create'])->name('products.create');
+        Route::post('/articulos', [ProductController::class, 'store'])->name('products.store');
+        Route::get('/articulos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/articulos/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/articulos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
         Route::get('/pedidos', [PlaceholderModuleController::class, 'orders'])->name('orders.index');
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');

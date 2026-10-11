@@ -19,6 +19,7 @@
                 alt="{{ $product->title }} ({{ $product->sku }})"
                 class="object-cover w-full h-48 rounded-t-lg group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
+                decoding="async"
             >
             <div class="absolute top-3 left-3 z-10 flex gap-1.5 pointer-events-none">
                 <span class="bg-[#111111]/90 text-white px-2 py-0.5 rounded text-xs font-semibold shadow-sm">

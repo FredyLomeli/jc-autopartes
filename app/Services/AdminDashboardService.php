@@ -19,7 +19,7 @@ class AdminDashboardService
      */
     public function getDashboardData(): array
     {
-        $products = Product::query()->with('photos')->orderByDesc('id')->get();
+        $products = Product::query()->with('primaryPhoto')->orderByDesc('id')->get();
 
         $totalProducts = $products->count();
         $publishedProducts = $products->where('status', 'published')->count();
