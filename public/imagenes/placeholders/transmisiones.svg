@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#F8F9FA"/>
+  <rect x="24" y="24" width="752" height="552" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="4"/>
+  <rect x="24" y="24" width="752" height="68" rx="12" fill="#111111"/>
+  <text x="52" y="66" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">JC AUTOPARTES</text>
+  <rect x="590" y="40" width="160" height="36" rx="6" fill="#E31221"/>
+  <text x="670" y="64" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">GARANTÍA 30 DÍAS</text>
+  <g transform="translate(250, 155)" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 40h90l50 30h100v120H170l-50 30H30z" fill="#F8F9FA"/>
+    <circle cx="95" cy="130" r="36" stroke="#E31221"/>
+    <circle cx="215" cy="130" r="24" stroke="#E31221"/>
+    <path d="M95 94v72M59 130h72"/>
+  </g>
+  <text x="400" y="475" text-anchor="middle" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">TRANSMISIONES AUTOMÁTICAS Y ESTÁNDAR</text>
+  <text x="400" y="512" text-anchor="middle" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="500">Pieza Original Usada Verificada · Tepatitlán, Jal.</text>
+</svg>

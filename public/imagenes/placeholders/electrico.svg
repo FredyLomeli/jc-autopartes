@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#F8F9FA"/>
+  <rect x="24" y="24" width="752" height="552" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="4"/>
+  <rect x="24" y="24" width="752" height="68" rx="12" fill="#111111"/>
+  <text x="52" y="66" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">JC AUTOPARTES</text>
+  <rect x="590" y="40" width="160" height="36" rx="6" fill="#E31221"/>
+  <text x="670" y="64" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">GARANTÍA 7 DÍAS</text>
+  <g transform="translate(260, 155)" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="140" cy="125" r="95" fill="#F8F9FA"/>
+    <path d="M150 65l-35 60h50l-35 60" stroke="#E31221" stroke-width="12"/>
+  </g>
+  <text x="400" y="475" text-anchor="middle" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">SISTEMA ELÉCTRICO Y MÓDULOS</text>
+  <text x="400" y="512" text-anchor="middle" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="500">Pieza Original Usada Verificada · Tepatitlán, Jal.</text>
+</svg>

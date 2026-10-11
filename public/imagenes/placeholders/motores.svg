@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#F8F9FA"/>
+  <rect x="24" y="24" width="752" height="552" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="4"/>
+  <rect x="24" y="24" width="752" height="68" rx="12" fill="#111111"/>
+  <text x="52" y="66" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">JC AUTOPARTES</text>
+  <rect x="590" y="40" width="160" height="36" rx="6" fill="#E31221"/>
+  <text x="670" y="64" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">GARANTÍA 30 DÍAS</text>
+  <g transform="translate(230, 165)" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="40" y="50" width="260" height="160" rx="16" fill="#F8F9FA"/>
+    <path d="M80 50V20h180v30M110 20V5M230 20V5"/>
+    <circle cx="115" cy="130" r="32" stroke="#E31221"/>
+    <circle cx="225" cy="130" r="32" stroke="#E31221"/>
+    <path d="M10 95h30M10 165h30M300 100h35v60h-35"/>
+    <path d="M85 210l-20 35h210l-20-35"/>
+  </g>
+  <text x="400" y="475" text-anchor="middle" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">MOTORES COMPLETOS Y 3/4</text>
+  <text x="400" y="512" text-anchor="middle" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="500">Pieza Original Usada Verificada · Tepatitlán, Jal.</text>
+</svg>
