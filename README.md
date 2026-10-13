@@ -1,59 +1,172 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# JC Autopartes — Plataforma de Comercio Electrónico y Administración
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema web para **JC Autopartes** (deshuesadero y venta de autopartes usadas originales en Tepatitlán de Morelos, Jalisco, México).
 
-## About Laravel
+Este proyecto combina un **sitio público renderizado en servidor** (Blade + Tailwind CSS + Alpine.js) optimizado para SEO y velocidad en redes móviles, con un **panel administrativo privado** (Vue 3 + Inertia.js + Vite) bajo la ruta `/admin`.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Estado del Proyecto — Fase A0 Completada (100%)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+La **Fase A0: Andamiaje visual, capa pública, carrito y administración en Laravel** se encuentra concluida al 100% y respaldada por 50 pruebas automatizadas.
 
-## Learning Laravel
+Para consultar la matriz completa de criterios de aceptación y evidencias técnicas, consulta [`docs/cierre_fase_A0.md`](docs/cierre_fase_A0.md).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Stack Tecnológico
 
-## Laravel Sponsors
+- **Framework:** Laravel 12 (PHP 8.2+)
+- **Base de Datos:** MySQL / MariaDB (SQLite en pruebas automatizadas)
+- **Sitio Público:** Blade + Tailwind CSS + Alpine.js (Server-Side Rendering para indexación y SEO)
+- **Panel Administrativo (`/admin`):** Vue 3 + Inertia.js + Vite
+- **Reglas de Dominio Centrales:**
+  - **Existencias:** Única fuente de verdad en `App\Services\StockService`.
+  - **Precios:** Única fuente de verdad en `App\Services\PriceService`.
+  - **Lógica de Negocio:** Encapsulada exclusivamente en `app/Services/`.
+  - **Arquitectura de Integración:** Abstracciones preparadas detrás de interfaces (`PaymentGateway`, `ShippingQuoteProvider`, `WhatsAppChannel`, `MarketplaceClient`).
+- **Compatibilidad con Hosting Compartido:** Diseñado sin WebSockets ni procesos en segundo plano permanentes. Manejo de colas y tareas mediante el cron nativo de Laravel (`schedule:run`).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🎨 Tokens de Diseño Oficiales
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Definidos en `resources/css/app.css` y mapeados en `tailwind.config.js`:
+- **Rojo JC (Primario):** `#E31221` (Hover: `#C40E1B`)
+- **Carbón (Oscuro):** `#111111`
+- **Superficie Neutra:** `#F8F9FA`
+- **Bordes:** `#E5E7EB`
+- **WhatsApp:** `#25D366`
+- **Tipografía:** Inter, Roboto, sans-serif
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 💻 Instalación y Configuración Local
 
-## Code of Conduct
+### 1. Requisitos Previos
+- PHP 8.2 o superior con extensiones activas (`pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `curl`, `fileinfo`, `gd`).
+- Composer 2+.
+- Node.js 18+ y npm.
+- MySQL 8.0+ o MariaDB 10.4+.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Pasos de Instalación
+```bash
+# 1. Clonar el repositorio y entrar a la carpeta
+git clone <url-del-repositorio> jc-autopartes
+cd jc-autopartes
 
-## Security Vulnerabilities
+# 2. Instalar dependencias de PHP y JavaScript
+composer install
+npm install
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 3. Configurar variables de entorno
+cp .env.example .env
+php artisan key:generate
 
-## License
+# 4. Configurar tu base de datos en el archivo .env:
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=jc_autopartes
+# DB_USERNAME=root
+# DB_PASSWORD=
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 5. Ejecutar migraciones y semillero idempotente (36 refacciones y admin)
+php artisan migrate --seed
+
+# 6. Compilar assets de frontend
+npm run build
+# O para desarrollo con recarga en caliente:
+# npm run dev
+
+# 7. Iniciar el servidor local
+php artisan serve
+```
+
+### 3. Credenciales de Acceso al Panel Administrativo (Seeder)
+- **URL de Acceso:** `http://localhost:8000/login` o `http://localhost:8000/admin`
+- **Correo Electrónico:** `admin@jcautopartes.mx`
+- **Contraseña:** `password`
+
+---
+
+## 🌐 Guía de Despliegue en Hosting Compartido (cPanel / Apache)
+
+El proyecto está optimizado para entornos de hosting compartido donde no se cuenta con acceso root ni procesos permanentes de Node/Supervisord.
+
+### 1. Estructura de Directorios en el Servidor
+En la mayoría de los servidores cPanel existen dos esquemas habituales:
+- **Esquema A (Recomendado):** El repositorio se aloja en una carpeta fuera de la raíz web (ej. `/home/usuario/jc-autopartes`) y el DocumentRoot del dominio apunta directamente a `/home/usuario/jc-autopartes/public`.
+- **Esquema B (Carpeta `public_html` fija):** Los archivos de Laravel se colocan en `/home/usuario/laravel_app` y el contenido de la carpeta `public/` se copia directamente dentro de `/home/usuario/public_html`.
+
+### 2. Variables de Entorno Clave (`.env`)
+```ini
+APP_NAME="JC Autopartes"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://tudominio.com
+
+# Base de datos
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=usuario_jcautopartes
+DB_USERNAME=usuario_dbuser
+DB_PASSWORD="password_seguro"
+
+# Configuración de Almacenamiento e Imágenes
+# Si storage:link no está permitido por tu proveedor, define la ruta física absoluta de public_html/storage:
+FILESYSTEM_DISK=public
+FILESYSTEM_PUBLIC_ROOT=/home/usuario/public_html/storage
+```
+
+### 3. Tareas Programadas y Colas (Cron de cPanel)
+Configura una tarea programada (Cron Job) que se ejecute **cada minuto**:
+```bash
+* * * * * cd /home/usuario/jc-autopartes && php artisan schedule:run >> /dev/null 2>&1
+```
+
+### 4. Permisos de Archivos
+Asegúrate de otorgar permisos de escritura al servidor web en las carpetas de almacenamiento y caché:
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+### 5. Optimización de Caché de Producción
+Al desplegar o actualizar en producción, ejecuta:
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+---
+
+## 📦 Empaquetado Automático para Despliegue
+
+Se incluye un script en PowerShell para preparar paquetes de despliegue listos para subir a cPanel (sin `node_modules`, sin `.git` y con los assets de producción compilados):
+
+```powershell
+# Ejecutar desde la raíz del proyecto
+.\scripts\package-deploy.ps1
+```
+El script generará un archivo `dist/jc-autopartes-deploy-YYYYMMDD.zip` listo para extraer en tu hosting.
+
+---
+
+## 🧪 Pruebas Automatizadas
+
+El proyecto cuenta con una batería completa de pruebas funcionales y de integración (Feature Tests):
+
+```bash
+php artisan test
+```
+
+**Resultado:**
+- `Tests\Feature\PublicLayoutTest`: Verificación de layout público Blade, tokens de diseño y SEO básico.
+- `Tests\Feature\StockAndPriceServiceTest`: Idempotencia de seeders, contratos y fuentes de verdad en `StockService` y `PriceService`.
+- `Tests\Feature\PublicCatalogAndSeoTest`: Filtros por query string, canonicals, JSON-LD Schema.org/Product, sitemap y robots.txt.
+- `Tests\Feature\CartAndCheckoutTest`: Persistencia de carrito en sesión, validación de stock y checkout visual.
+- `Tests\Feature\AdminAccessAndDashboardTest`: Protección por autenticación, redirecciones y métricas de panel.
+- `Tests\Feature\AdminProductsCrudTest`: Operaciones CRUD completas y sincronización en tiempo real con el catálogo público.
+- **50 pruebas / 301 aserciones — 100% en verde.**
