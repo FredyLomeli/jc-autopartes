@@ -6,11 +6,10 @@ Este proyecto combina un **sitio público renderizado en servidor** (Blade + Tai
 
 ---
 
-## 🚀 Estado del Proyecto — Fase A0 Completada (100%)
+## 🚀 Estado del Proyecto — Fases A0 y B Completadas (100%)
 
-La **Fase A0: Andamiaje visual, capa pública, carrito y administración en Laravel** se encuentra concluida al 100% y respaldada por 50 pruebas automatizadas.
-
-Para consultar la matriz completa de criterios de aceptación y evidencias técnicas, consulta [`docs/cierre_fase_A0.md`](docs/cierre_fase_A0.md).
+- **Fase A0: Andamiaje visual, capa pública, carrito y administración en Laravel** — Concluida al 100% y respaldada por 50 pruebas automatizadas. Ver detalles en [`docs/cierre_fase_A0.md`](docs/cierre_fase_A0.md).
+- **Fase B: Sincronización de Lectura con Mercado Libre y Modelado Definitivo del Catálogo** — Concluida al 100%, certificada con OAuth 2.0 seguro, ingesta cruda, normalización de catálogo automotriz, panel administrativo y comandos de consola. Ver detalles en [`docs/cierre_fase_B.md`](docs/cierre_fase_B.md).
 
 ---
 
@@ -154,19 +153,46 @@ El script generará un archivo `dist/jc-autopartes-deploy-YYYYMMDD.zip` listo pa
 
 ---
 
+## 🔄 Integración con Mercado Libre (Fase B)
+
+El sistema incluye sincronización unidireccional de lectura con Mercado Libre para transformar publicaciones comerciales en refacciones estructuradas para el e-commerce:
+
+### 1. Variables de Entorno Requeridas (`.env`)
+```ini
+MELI_APP_ID=tu_app_id
+MELI_CLIENT_SECRET=tu_client_secret
+MELI_REDIRECT_URI="${APP_URL}/admin/integraciones/mercadolibre/callback"
+MELI_COUNTRY_ID=MLM
+MELI_PRICE_FACTOR=1.0
+```
+
+### 2. Comandos de Consola Artisan
+```bash
+# 1. Ingesta de publicaciones crudas en JSON
+php artisan meli:fetch-raw --fixture
+
+# 2. Sincronización y transformación de refacciones al catálogo
+php artisan meli:sync-catalog --fixture
+
+# 3. Sincronización procesando el histórico crudo almacenado
+php artisan meli:sync-catalog --from-raw
+```
+
+### 3. Sincronización desde la Web
+En `/admin/articulos`, los administradores pueden pulsar **«Sincronizar ML»** para importar o refrescar refacciones bajo demanda.
+
+---
+
 ## 🧪 Pruebas Automatizadas
 
-El proyecto cuenta con una batería completa de pruebas funcionales y de integración (Feature Tests):
+El proyecto cuenta con una batería completa de pruebas unitarias y funcionales (Unit y Feature Tests):
 
 ```bash
 php artisan test
 ```
 
 **Resultado:**
-- `Tests\Feature\PublicLayoutTest`: Verificación de layout público Blade, tokens de diseño y SEO básico.
-- `Tests\Feature\StockAndPriceServiceTest`: Idempotencia de seeders, contratos y fuentes de verdad en `StockService` y `PriceService`.
-- `Tests\Feature\PublicCatalogAndSeoTest`: Filtros por query string, canonicals, JSON-LD Schema.org/Product, sitemap y robots.txt.
-- `Tests\Feature\CartAndCheckoutTest`: Persistencia de carrito en sesión, validación de stock y checkout visual.
-- `Tests\Feature\AdminAccessAndDashboardTest`: Protección por autenticación, redirecciones y métricas de panel.
-- `Tests\Feature\AdminProductsCrudTest`: Operaciones CRUD completas y sincronización en tiempo real con el catálogo público.
-- **50 pruebas / 301 aserciones — 100% en verde.**
+- **Fase A0 (50 pruebas / 301 aserciones):** Layout Blade, fuentes de verdad en `StockService` y `PriceService`, filtros de catálogo, canonicals, JSON-LD, carrito de compras, dashboard administrativo y CRUD de artículos.
+- **Fase B (35 pruebas / 139 aserciones):** Flujo OAuth 2.0 y refresh de tokens, ingesta de JSON crudo, mapper con regex de rangos de años y dimensiones de paquetería, servicio desacoplado de sincronización y rutas administrativas.
+- **Total:** **85 pruebas automatizadas — 100% en verde.**
+

@@ -51,6 +51,7 @@ Route::prefix('admin')
         Route::get('/articulos', [ProductController::class, 'index'])->name('products.index');
         Route::get('/articulos/crear', [ProductController::class, 'create'])->name('products.create');
         Route::post('/articulos', [ProductController::class, 'store'])->name('products.store');
+        Route::post('/articulos/sincronizar-meli', [ProductController::class, 'syncFromMercadoLibre'])->name('products.sync-meli');
         Route::get('/articulos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
         Route::put('/articulos/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/articulos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');

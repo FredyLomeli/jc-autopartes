@@ -44,6 +44,12 @@ class AdminProductsCrudTest extends TestCase
     {
         $payload = [
             'sku' => 'JC-MOT-999',
+            'part_number' => 'PY-01-02-100',
+            'oem_number' => 'PY0102100A',
+            'side' => 'izquierdo',
+            'position' => 'delantero',
+            'mercadolibre_id' => 'MLM999888777',
+            'mercadolibre_permalink' => 'https://articulo.mercadolibre.com.mx/MLM-999888777-motor-mazda.html',
             'title' => 'Motor 2.5L SkyActiv-G Mazda 3 2019-2022 Original',
             'category' => 'Motores',
             'vehicle_brand' => 'Mazda',
@@ -72,6 +78,12 @@ class AdminProductsCrudTest extends TestCase
 
         $this->assertSame(34500.00, $priceService->getUnitPrice($product));
         $this->assertSame(2, $stockService->getAvailableStock($product));
+        $this->assertSame('PY-01-02-100', $product->part_number);
+        $this->assertSame('PY0102100A', $product->oem_number);
+        $this->assertSame('izquierdo', $product->side);
+        $this->assertSame('delantero', $product->position);
+        $this->assertSame('MLM999888777', $product->mercadolibre_id);
+        $this->assertTrue($product->isMercadoLibreSynced());
         $this->assertCount(1, $product->photos);
 
         // Verificar que aparece inmediatamente en el catálogo público y en su ficha de detalle
@@ -83,6 +95,7 @@ class AdminProductsCrudTest extends TestCase
         $this->get(route('catalog.show', $product->slug))
             ->assertStatus(200)
             ->assertSee('Motor 2.5L SkyActiv-G Mazda 3 2019-2022 Original')
+            ->assertSee('PY-01-02-100')
             ->assertSee('30 días');
     }
 

@@ -46,6 +46,21 @@
                         {{ $product->title }}
                     </a>
                 </h3>
+
+                @if($product->part_number || $product->sideAndPositionLabel())
+                    <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        @if($product->part_number)
+                            <span class="bg-surface px-1.5 py-0.5 rounded border border-border text-gray-600 font-mono" title="Número de parte del fabricante">
+                                P/N: {{ $product->part_number }}
+                            </span>
+                        @endif
+                        @if($product->sideAndPositionLabel())
+                            <span class="bg-red-50 text-primary border border-red-100 px-1.5 py-0.5 rounded font-medium">
+                                {{ $product->sideAndPositionLabel() }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <p class="mt-3 text-xs font-semibold text-gray-700 bg-surface rounded px-2.5 py-1.5 border border-border truncate">

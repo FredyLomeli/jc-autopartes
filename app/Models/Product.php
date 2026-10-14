@@ -23,14 +23,20 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
+        'mercadolibre_id',
+        'mercadolibre_permalink',
         'title',
         'slug',
         'sku',
+        'part_number',
+        'oem_number',
         'category',
         'vehicle_brand',
         'vehicle_model',
         'year_start',
         'year_end',
+        'side',
+        'position',
         'condition',
         'price',
         'stock',
@@ -41,6 +47,8 @@ class Product extends Model
         'length_cm',
         'status',
         'is_featured',
+        'raw_attributes',
+        'last_synced_at',
     ];
 
     protected function casts(): array
@@ -55,6 +63,8 @@ class Product extends Model
             'width_cm' => 'decimal:2',
             'length_cm' => 'decimal:2',
             'is_featured' => 'boolean',
+            'raw_attributes' => 'array',
+            'last_synced_at' => 'datetime',
         ];
     }
 
@@ -110,5 +120,33 @@ class Product extends Model
             'C' => 'Grado C — Funcional para reacondicionar o despiece',
             default => 'Pieza usada original verificada',
         };
+    }
+
+    public function isMercadoLibreSynced(): bool
+    {
+        return ! empty($this->mercadolibre_id);
+    }
+
+    public function getMeliSpec(string $attributeId): ?string
+    {
+        $attributes = $this->raw_attributes ?? [];
+        if (! is_array($attributes)) {
+            return null;
+        }
+
+        foreach ($attributes as $attr) {
+            if (($attr['id'] ?? null) === $attributeId) {
+                return $attr['value_name'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    public function sideAndPositionLabel(): ?string
+    {
+        $parts = array_filter([$this->position, $this->side]);
+
+        return ! empty($parts) ? implode(' • ', $parts) : null;
     }
 }

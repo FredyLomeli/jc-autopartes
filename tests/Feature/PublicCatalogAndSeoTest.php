@@ -96,6 +96,7 @@ class PublicCatalogAndSeoTest extends TestCase
         $this->assertSame('Product', $decoded['@type']);
         $this->assertSame($product->title, $decoded['name']);
         $this->assertSame($product->sku, $decoded['sku']);
+        $this->assertSame($product->part_number ?? $product->sku, $decoded['mpn']);
         $this->assertSame('MXN', $decoded['offers']['priceCurrency']);
         $this->assertSame('18500.00', $decoded['offers']['price']);
         $this->assertSame('https://schema.org/InStock', $decoded['offers']['availability']);

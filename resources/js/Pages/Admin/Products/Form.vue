@@ -28,6 +28,10 @@ const initialPhotoUrls =
 const form = useForm({
     _method: isEdit ? 'put' : 'post',
     sku: props.product?.sku ?? '',
+    part_number: props.product?.part_number ?? '',
+    oem_number: props.product?.oem_number ?? '',
+    mercadolibre_id: props.product?.mercadolibre_id ?? '',
+    mercadolibre_permalink: props.product?.mercadolibre_permalink ?? '',
     title: props.product?.title ?? '',
     slug: props.product?.slug ?? '',
     category: props.product?.category ?? (props.options.categories?.[0] || 'Motores'),
@@ -35,6 +39,8 @@ const form = useForm({
     vehicle_model: props.product?.vehicle_model ?? '',
     year_start: props.product?.year_start ?? 2016,
     year_end: props.product?.year_end ?? 2021,
+    side: props.product?.side ?? '',
+    position: props.product?.position ?? '',
     condition: props.product?.condition ?? 'A',
     price: props.product?.price ?? 0,
     stock: props.product?.stock ?? 1,
@@ -144,6 +150,74 @@ const submit = () => {
                                     class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm font-mono text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
                                 />
                                 <InputError class="mt-1" :message="form.errors.sku" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="part_number" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                    Número de Parte (Fabricante)
+                                </label>
+                                <input
+                                    id="part_number"
+                                    v-model="form.part_number"
+                                    type="text"
+                                    placeholder="Ej. 10102-1KA0A, 26060-3BA0A"
+                                    class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm font-mono text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                />
+                                <InputError class="mt-1" :message="form.errors.part_number" />
+                            </div>
+
+                            <div>
+                                <label for="oem_number" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                    Número de Parte OEM (Original)
+                                </label>
+                                <input
+                                    id="oem_number"
+                                    v-model="form.oem_number"
+                                    type="text"
+                                    placeholder="Ej. OEM-987654321"
+                                    class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm font-mono text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                />
+                                <InputError class="mt-1" :message="form.errors.oem_number" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="side" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                    Lado de Instalación
+                                </label>
+                                <select
+                                    id="side"
+                                    v-model="form.side"
+                                    class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                >
+                                    <option value="">No aplica / Indistinto</option>
+                                    <option value="izquierdo">Izquierdo (Lado Piloto)</option>
+                                    <option value="derecho">Derecho (Lado Copiloto)</option>
+                                    <option value="ambos">Ambos Lados (Par)</option>
+                                </select>
+                                <InputError class="mt-1" :message="form.errors.side" />
+                            </div>
+
+                            <div>
+                                <label for="position" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                    Posición en el Vehículo
+                                </label>
+                                <select
+                                    id="position"
+                                    v-model="form.position"
+                                    class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                >
+                                    <option value="">No aplica / Indistinta</option>
+                                    <option value="delantero">Delantero (Frontal)</option>
+                                    <option value="trasero">Trasero (Posterior)</option>
+                                    <option value="superior">Superior</option>
+                                    <option value="inferior">Inferior</option>
+                                    <option value="central">Central</option>
+                                </select>
+                                <InputError class="mt-1" :message="form.errors.position" />
                             </div>
                         </div>
 
@@ -414,6 +488,68 @@ const submit = () => {
                                 Mostrar en «Piezas Destacadas» de la portada
                             </span>
                         </label>
+                    </section>
+
+                    <!-- Sincronización Mercado Libre -->
+                    <section class="bg-white rounded-card border border-border p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-border pb-2">
+                            <h2 class="text-sm font-extrabold uppercase tracking-wider text-dark">
+                                Mercado Libre
+                            </h2>
+                            <span
+                                v-if="form.mercadolibre_id"
+                                class="px-2 py-0.5 rounded bg-yellow-100 text-yellow-900 border border-yellow-300 text-[10px] font-extrabold uppercase"
+                            >
+                                Sincronizado
+                            </span>
+                        </div>
+
+                        <div v-if="form.mercadolibre_id" class="p-3 bg-yellow-50 border border-yellow-200 rounded-base text-xs space-y-1">
+                            <p class="font-bold text-yellow-900">
+                                Vinculado con publicación de Mercado Libre:
+                            </p>
+                            <p class="font-mono text-gray-700">
+                                {{ form.mercadolibre_id }}
+                            </p>
+                            <a
+                                v-if="form.mercadolibre_permalink"
+                                :href="form.mercadolibre_permalink"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 text-primary font-bold hover:underline pt-1"
+                            >
+                                <span>Ver publicación en Mercado Libre</span>
+                                <span>↗</span>
+                            </a>
+                        </div>
+
+                        <div>
+                            <label for="mercadolibre_id" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                ID de Publicación ML
+                            </label>
+                            <input
+                                id="mercadolibre_id"
+                                v-model="form.mercadolibre_id"
+                                type="text"
+                                placeholder="Ej. MLM1234567890"
+                                class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm font-mono text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                            />
+                            <InputError class="mt-1" :message="form.errors.mercadolibre_id" />
+                        </div>
+
+                        <div>
+                            <label for="mercadolibre_permalink" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                URL Permanente de Mercado Libre
+                            </label>
+                            <input
+                                id="mercadolibre_permalink"
+                                v-model="form.mercadolibre_permalink"
+                                type="url"
+                                placeholder="https://articulo.mercadolibre.com.mx/MLM-..."
+                                class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                            />
+                            <InputError class="mt-1" :message="form.errors.mercadolibre_permalink" />
+                        </div>
                     </section>
 
                     <!-- Peso y Dimensiones para Paquetería -->

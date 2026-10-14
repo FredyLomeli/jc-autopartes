@@ -232,6 +232,24 @@
                                 <dt class="text-gray-600">Número de Parte / SKU Interno</dt>
                                 <dd class="font-mono font-bold text-dark">{{ $product->sku }}</dd>
                             </div>
+                            @if($product->part_number)
+                                <div class="py-2 flex justify-between">
+                                    <dt class="text-gray-600">Número de Parte del Fabricante</dt>
+                                    <dd class="font-mono font-bold text-dark">{{ $product->part_number }}</dd>
+                                </div>
+                            @endif
+                            @if($product->oem_number)
+                                <div class="py-2 flex justify-between">
+                                    <dt class="text-gray-600">Número de Parte OEM</dt>
+                                    <dd class="font-mono font-bold text-dark">{{ $product->oem_number }}</dd>
+                                </div>
+                            @endif
+                            @if($product->sideAndPositionLabel())
+                                <div class="py-2 flex justify-between">
+                                    <dt class="text-gray-600">Lado / Posición</dt>
+                                    <dd class="font-semibold text-primary">{{ $product->sideAndPositionLabel() }}</dd>
+                                </div>
+                            @endif
                             <div class="py-2 flex justify-between">
                                 <dt class="text-gray-600">Categoría</dt>
                                 <dd class="font-semibold text-dark">{{ $product->category }}</dd>
@@ -248,6 +266,17 @@
                                 <dt class="text-gray-600">Rango de Años</dt>
                                 <dd class="font-semibold text-dark">{{ $product->year_start }} al {{ $product->year_end }}</dd>
                             </div>
+                            @if($product->mercadolibre_permalink)
+                                <div class="py-2 flex justify-between items-center">
+                                    <dt class="text-gray-600">Mercado Libre</dt>
+                                    <dd>
+                                        <a href="{{ $product->mercadolibre_permalink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-bold text-yellow-900 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 px-2 py-0.5 rounded transition-colors">
+                                            <span>Ver publicación en Mercado Libre</span>
+                                            <span>↗</span>
+                                        </a>
+                                    </dd>
+                                </div>
+                            @endif
                         </dl>
                     </div>
 

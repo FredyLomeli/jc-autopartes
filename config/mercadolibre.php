@@ -30,4 +30,9 @@ return [
     | Identificador de país (MLM = México)
     */
     'country_id' => env('MELI_COUNTRY_ID', 'MLM'),
+
+    /*
+    | Factor multiplicador para el precio web (1.0 = mismo precio, 0.95 = 5% descuento web)
+    */
+    'price_factor' => (float) env('MELI_PRICE_FACTOR', 1.0),
 ];

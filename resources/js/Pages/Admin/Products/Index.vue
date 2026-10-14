@@ -51,6 +51,24 @@ const confirmDelete = (item) => {
         });
     }
 };
+
+const isSyncing = ref(false);
+const syncMercadoLibre = () => {
+    if (isSyncing.value) return;
+    if (window.confirm('¿Deseas sincronizar el catálogo con las publicaciones de Mercado Libre ahora?')) {
+        isSyncing.value = true;
+        router.post(
+            route('admin.products.sync-meli'),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    isSyncing.value = false;
+                },
+            }
+        );
+    }
+};
 </script>
 
 <template>
@@ -61,13 +79,27 @@ const confirmDelete = (item) => {
         subtitle="Gestión de refacciones, existencias, precios y estado de publicación"
     >
         <template #actions>
-            <Link
-                :href="route('admin.products.create')"
-                class="bg-primary hover:bg-primary-hover text-white font-extrabold px-4 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-sm inline-flex items-center gap-1.5"
-            >
-                <span>＋</span>
-                <span>Nuevo Artículo</span>
-            </Link>
+            <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    @click="syncMercadoLibre"
+                    :disabled="isSyncing"
+                    class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-extrabold px-3.5 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50"
+                    title="Importar y actualizar publicaciones de Mercado Libre"
+                >
+                    <svg class="w-4 h-4" :class="{ 'animate-spin': isSyncing }" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                    </svg>
+                    <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar ML' }}</span>
+                </button>
+                <Link
+                    :href="route('admin.products.create')"
+                    class="bg-primary hover:bg-primary-hover text-white font-extrabold px-4 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-sm inline-flex items-center gap-1.5"
+                >
+                    <span>＋</span>
+                    <span>Nuevo Artículo</span>
+                </Link>
+            </div>
         </template>
 
         <div class="space-y-6">
@@ -198,6 +230,39 @@ const confirmDelete = (item) => {
                                             <p class="text-xs font-mono text-gray-500 mt-0.5">
                                                 SKU: {{ item.sku }} · {{ item.category }}
                                             </p>
+                                            <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
+                                                <span
+                                                    v-if="item.part_number"
+                                                    class="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded font-mono"
+                                                    title="Número de parte del fabricante"
+                                                >
+                                                    P/N: {{ item.part_number }}
+                                                </span>
+                                                <span
+                                                    v-if="item.side_position_label"
+                                                    class="text-primary-700 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded font-medium"
+                                                >
+                                                    {{ item.side_position_label }}
+                                                </span>
+                                                <a
+                                                    v-if="item.mercadolibre_permalink"
+                                                    :href="item.mercadolibre_permalink"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-900 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 px-1.5 py-0.5 rounded transition-colors"
+                                                    title="Ver publicación original en Mercado Libre"
+                                                >
+                                                    <span>ML</span>
+                                                    <span class="text-[9px]">↗</span>
+                                                </a>
+                                                <span
+                                                    v-else-if="item.mercadolibre_id"
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-900 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5 rounded"
+                                                    title="ID de publicación Mercado Libre"
+                                                >
+                                                    ML: {{ item.mercadolibre_id }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

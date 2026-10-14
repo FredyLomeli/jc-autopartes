@@ -11,11 +11,29 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+use App\Services\MercadoLibre\MercadoLibreCatalogSyncService;
+
 class ProductController extends Controller
 {
     public function __construct(
         private readonly AdminProductService $adminProductService,
     ) {}
+
+    public function syncFromMercadoLibre(MercadoLibreCatalogSyncService $syncService): RedirectResponse
+    {
+        try {
+            $result = $syncService->sync();
+            $message = "Sincronización con Mercado Libre exitosa: {$result['created']} artículos importados y {$result['updated']} actualizados de un total de {$result['total']} publicaciones.";
+
+            return redirect()
+                ->route('admin.products.index')
+                ->with('success', $message);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('admin.products.index')
+                ->with('error', "Error al sincronizar con Mercado Libre: {$e->getMessage()}");
+        }
+    }
 
     public function index(Request $request): Response
     {

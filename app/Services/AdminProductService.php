@@ -29,14 +29,20 @@ class AdminProductService
      */
     private const LISTING_COLUMNS = [
         'id',
+        'mercadolibre_id',
+        'mercadolibre_permalink',
         'title',
         'slug',
         'sku',
+        'part_number',
+        'oem_number',
         'category',
         'vehicle_brand',
         'vehicle_model',
         'year_start',
         'year_end',
+        'side',
+        'position',
         'condition',
         'price',
         'stock',
@@ -60,6 +66,8 @@ class AdminProductService
             $query->where(function ($sub) use ($search) {
                 $sub->where('title', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('part_number', 'like', "%{$search}%")
+                    ->orWhere('mercadolibre_id', 'like', "%{$search}%")
                     ->orWhere('vehicle_brand', 'like', "%{$search}%")
                     ->orWhere('vehicle_model', 'like', "%{$search}%");
             });
@@ -86,6 +94,11 @@ class AdminProductService
                 return [
                     'id' => $product->id,
                     'sku' => $product->sku,
+                    'part_number' => $product->part_number,
+                    'oem_number' => $product->oem_number,
+                    'mercadolibre_id' => $product->mercadolibre_id,
+                    'mercadolibre_permalink' => $product->mercadolibre_permalink,
+                    'is_meli_synced' => $product->isMercadoLibreSynced(),
                     'title' => $product->title,
                     'slug' => $product->slug,
                     'category' => $product->category,
@@ -93,6 +106,9 @@ class AdminProductService
                     'vehicle_model' => $product->vehicle_model,
                     'year_start' => $product->year_start,
                     'year_end' => $product->year_end,
+                    'side' => $product->side,
+                    'position' => $product->position,
+                    'side_position_label' => $product->sideAndPositionLabel(),
                     'condition' => $product->condition,
                     'warranty_days' => $product->warrantyDays(),
                     'price' => $unitPrice,
@@ -160,7 +176,11 @@ class AdminProductService
 
         return [
             'id' => $product->id,
+            'mercadolibre_id' => $product->mercadolibre_id,
+            'mercadolibre_permalink' => $product->mercadolibre_permalink,
             'sku' => $product->sku,
+            'part_number' => $product->part_number ?? '',
+            'oem_number' => $product->oem_number ?? '',
             'title' => $product->title,
             'slug' => $product->slug,
             'category' => $product->category,
@@ -168,6 +188,8 @@ class AdminProductService
             'vehicle_model' => $product->vehicle_model,
             'year_start' => (int) $product->year_start,
             'year_end' => (int) $product->year_end,
+            'side' => $product->side ?? '',
+            'position' => $product->position ?? '',
             'condition' => $product->condition,
             'price' => $this->priceService->getUnitPrice($product),
             'stock' => $this->stockService->getAvailableStock($product),
@@ -204,6 +226,10 @@ class AdminProductService
 
             $product = Product::query()->create([
                 'sku' => strtoupper(trim((string) $validated['sku'])),
+                'mercadolibre_id' => ! empty($validated['mercadolibre_id']) ? trim((string) $validated['mercadolibre_id']) : null,
+                'mercadolibre_permalink' => ! empty($validated['mercadolibre_permalink']) ? trim((string) $validated['mercadolibre_permalink']) : null,
+                'part_number' => ! empty($validated['part_number']) ? trim((string) $validated['part_number']) : null,
+                'oem_number' => ! empty($validated['oem_number']) ? trim((string) $validated['oem_number']) : null,
                 'title' => trim((string) $validated['title']),
                 'slug' => $slug,
                 'category' => (string) $validated['category'],
@@ -211,6 +237,8 @@ class AdminProductService
                 'vehicle_model' => trim((string) $validated['vehicle_model']),
                 'year_start' => (int) $validated['year_start'],
                 'year_end' => (int) $validated['year_end'],
+                'side' => ! empty($validated['side']) ? trim((string) $validated['side']) : null,
+                'position' => ! empty($validated['position']) ? trim((string) $validated['position']) : null,
                 'condition' => (string) $validated['condition'],
                 'price' => 0,
                 'stock' => 0,
@@ -255,6 +283,10 @@ class AdminProductService
 
             $product->update([
                 'sku' => strtoupper(trim((string) $validated['sku'])),
+                'mercadolibre_id' => ! empty($validated['mercadolibre_id']) ? trim((string) $validated['mercadolibre_id']) : null,
+                'mercadolibre_permalink' => ! empty($validated['mercadolibre_permalink']) ? trim((string) $validated['mercadolibre_permalink']) : null,
+                'part_number' => ! empty($validated['part_number']) ? trim((string) $validated['part_number']) : null,
+                'oem_number' => ! empty($validated['oem_number']) ? trim((string) $validated['oem_number']) : null,
                 'title' => trim((string) $validated['title']),
                 'slug' => $slug,
                 'category' => (string) $validated['category'],
@@ -262,6 +294,8 @@ class AdminProductService
                 'vehicle_model' => trim((string) $validated['vehicle_model']),
                 'year_start' => (int) $validated['year_start'],
                 'year_end' => (int) $validated['year_end'],
+                'side' => ! empty($validated['side']) ? trim((string) $validated['side']) : null,
+                'position' => ! empty($validated['position']) ? trim((string) $validated['position']) : null,
                 'condition' => (string) $validated['condition'],
                 'description' => $validated['description'] ?? null,
                 'weight_kg' => $validated['weight_kg'] ?? null,
