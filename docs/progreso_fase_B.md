@@ -44,9 +44,9 @@ flowchart LR
 | Sub-paso | Descripción | Estado |
 | :---: | :--- | :---: |
 | **B1** | Arquitectura de conexión, OAuth 2.0 seguro y Cliente `MarketplaceClient` | **COMPLETADO (100%)** |
-| **B2** | Extracción del catálogo y volcado de JSON crudo (`marketplace_raw_items`) | **SIGUIENTE A EJECUTAR** |
-| **B3** | Análisis de atributos de autopartes y documento de mapeo formal | *Pendiente* |
-| **B4** | Refactorización del modelo `Product` y comando sincronizador de catálogo | *Pendiente* |
+| **B2** | Extracción del catálogo y volcado de JSON crudo (`marketplace_raw_items`) | **COMPLETADO (100%)** |
+| **B3** | Análisis de atributos de autopartes y documento de mapeo formal | **COMPLETADO (100%)** |
+| **B4** | Refactorización del modelo `Product` y comando sincronizador de catálogo | **SIGUIENTE A EJECUTAR** |
 | **B5** | Actualización de `/admin/articulos` y ficha pública con metadatos de ML | *Pendiente* |
 | **B6** | Pruebas integrales automatizadas, documentación de cierre y QA manual | *Pendiente* |
 
@@ -129,17 +129,90 @@ flowchart LR
 
 ---
 
-## 4. Lo que se Realizará a Continuación (Sub-paso B2)
+## 4. Detalle Técnico del Sub-paso B2 (Extracción de Catálogo y JSON Crudo)
 
-El **Sub-paso B2: Extracción del Catálogo y Volcado de JSON Crudo** consiste en:
+### 4.1. Almacenamiento de Carga Útil Cruda
+* **Migración:** `database/migrations/2026_10_14_000002_create_marketplace_raw_items_table.php`. Crea la tabla `marketplace_raw_items` con campos: `external_id` (único e indexado), `title`, `status`, `raw_payload` (JSON) y `fetched_at`.
+* **Modelo:** `app/Models/MarketplaceRawItem.php`. Cast de `raw_payload` como array asociativo y métodos utilitarios:
+  * `getMeliAttribute(string $attributeId)`: Extrae valores limpios desde el arreglo de atributos de Mercado Libre (ej. `BRAND`, `PART_NUMBER`, `POSITION`, `SIDE`).
+  * `getPictureUrls()`: Extrae las URLs completas en alta definición de las imágenes.
 
-1. **Tabla de Respaldo Crudo:** Crear migración y modelo `MarketplaceRawItem` (`external_id`, `title`, `status`, `raw_payload` JSON, `fetched_at`) para persistir exactamente lo que entrega la API sin alterar nada.
-2. **Comando de Descarga e Inspección:** Crear el comando Artisan `php artisan meli:fetch-raw` con opciones:
-   * `--limit=N` para realizar pruebas de descarga controlada (ej. 10 o 50 artículos).
-   * `--status=active,paused` para filtrar publicaciones.
-   * `--fixture` para cargar un archivo local realista cuando se trabaje en entornos de desarrollo sin credenciales productivas activas.
-3. **Generación de Muestra:** Generar el archivo `storage/app/mercadolibre_sample.json` que servirá como insumo para auditar los atributos y elaborar el documento de mapeo en el Sub-paso B3.
-4. **Pruebas Automatizadas:** Crear `tests/Feature/MercadoLibreFetchRawTest.php` para validar el comando y la persistencia de los payloads crudos.
+### 4.2. Dataset Fixture de Autopartes Reales
+* **Archivo:** `database/fixtures/mercadolibre_autoparts_fixture.json`.
+* Incluye un lote realista de 8 autopartes representativas del deshuesadero en Tepatitlán:
+  * Motor 3/4 1.6L HR16DE (Nissan Versa).
+  * Transmisión Estándar 6 Vel (Nissan NP300 Frontier).
+  * Motor Completo 5.3L V8 EcoTec3 (Chevrolet Silverado 1500).
+  * Faro Delantero Derecho LED (Nissan Kicks) con posición y lado.
+  * Alternador Valeo 110A (Nissan Urvan NV350).
+  * Marcha Arranque (Volkswagen Jetta A6 MK6).
+  * Compresor A/C Denso (Toyota Hilux).
+  * Cremallera Electroasistida (Ford Figo).
+* Contiene estructura idéntica a la API de Mercado Libre: atributos automotrices, dimensiones físicas para logística (`shipping.dimensions`), fotos, precio, stock (`available_quantity`), condición (`used`) y descripción comercial.
+
+### 4.3. Servicio de Inspección y Comando Artisan
+* **Servicio:** `app/Services/MercadoLibre/MercadoLibreInspectorService.php`.
+  * `fetchAndStoreFromApi($limit, $status, $onProgress)`: Consulta en vivo mediante `MarketplaceClient`.
+  * `loadAndStoreFromFixture($fixturePath, $onProgress)`: Carga el dataset fixture para desarrollo local y testing sin cuellos de botella de red.
+  * `exportSampleJson($outputPath)`: Genera el archivo consolidado en `storage/app/mercadolibre_sample.json`.
+  * Manejo resiliente de almacenamiento para entornos con o sin driver de base de datos local.
+* **Comando de Consola:** `app/Console/Commands/MercadoLibreFetchRawItemsCommand.php` (`php artisan meli:fetch-raw`).
+  * Opciones: `--limit`, `--status`, `--fixture` y `--output`.
+  * Salida interactiva con barra de progreso, tabla de muestra de refacciones con sus marcas y números de parte, y resumen métrico de la extracción.
+  * Archivo de muestra generado: `storage/app/mercadolibre_sample.json` (21 KB).
+
+### 4.4. Batería de Pruebas Automatizadas (Sub-paso B2)
+* `tests/Unit/MercadoLibreInspectorTest.php`:
+  * Carga y validación estructural del fixture de autopartes.
+  * Verificación de persistencia y exportación de archivo JSON válido.
+  * Acceso rápido a atributos de autopartes (`BRAND`, `MODEL`, `PART_NUMBER`, `SIDE`, `POSITION`).
+* `tests/Feature/MercadoLibreFetchRawTest.php`:
+  * Disponibilidad de firma y opciones del comando `meli:fetch-raw --help`.
+  * Ejecución exitosa en modo `--fixture` y validación del archivo exportado.
+  * Control y mensaje descriptivo ante ejecución sin credenciales.
+* **Resultado Acumulado Fase B:** **21 pruebas automatizadas / 76 aserciones (100% OK).**
+
+---
+
+## 5. Detalle Técnico del Sub-paso B3 (Análisis de Atributos y Mapeo Formal)
+
+### 5.1. Auditoría y Análisis del Catálogo Real
+* A partir del archivo exportado `storage/app/mercadolibre_sample.json`, se auditaron los campos utilizados en publicaciones reales de autopartes:
+  * Identificadores: `id` (MLM), `permalink`, `status`.
+  * Precios e inventario: `price`, `currency_id`, `available_quantity`.
+  * Atributos vehiculares: `BRAND`, `MODEL`, `VEHICLE_YEAR`.
+  * Números de pieza: `PART_NUMBER` y `OEM_NUMBER`.
+  * Ubicación y montaje: `POSITION` y `SIDE`.
+  * Medidas de logística: `shipping.dimensions` (`alto x ancho x largo,peso_gramos`).
+
+### 5.2. Documento Formal de Mapeo
+* Se redactó y publicó el documento oficial: [`docs/mapeo_campos_mercadolibre.md`](mapeo_campos_mercadolibre.md).
+* **Decisiones Clave Acordadas:**
+  1. **Integridad de Existencias:** `available_quantity` se sincroniza exclusivamente mediante [`StockService::setStock()`](../app/Services/StockService.php) con bloqueo transaccional (`lockForUpdate`).
+  2. **Integridad de Precios:** `price` pasa por [`PriceService::setPrice()`](../app/Services/PriceService.php). Se habilita el factor multiplicador `MELI_PRICE_FACTOR` (por defecto `1.0`) para permitir descuentos futuros en la tienda propia.
+  3. **Extracción Inteligente de Años:** Algoritmo por expresiones regulares para detectar rangos en el título (ej. `"2015-2019" -> year_start=2015, year_end=2019`) cuando en los atributos de Mercado Libre solo venga un año puntual.
+  4. **Logística y Paquetería:** Desglose matemático de `shipping.dimensions` en `height_cm`, `width_cm`, `length_cm` y `weight_kg` (gramos / 1000).
+  5. **Metadatos Crudos:** Campo `raw_attributes` tipo JSON en `Product` para conservar especificaciones técnicas secundarias (amperaje, cilindrada, válvulas, etc.) sin saturar columnas de la tabla.
+
+---
+
+## 6. Lo que se Realizará a Continuación (Sub-paso B4)
+
+El **Sub-paso B4: Refactorización del Modelo `Product` y Migración del Catálogo Real** consiste en:
+
+1. **Migración no destructiva:** Crear `database/migrations/2026_10_14_000003_add_mercadolibre_fields_to_products_table.php` para incorporar:
+   * `mercadolibre_id` (string único e indexado).
+   * `mercadolibre_permalink` (string nullable).
+   * `part_number` (string indexado nullable).
+   * `oem_number` (string nullable).
+   * `side` (string nullable).
+   * `position` (string nullable).
+   * `raw_attributes` (JSON nullable).
+   * `last_synced_at` (timestamp nullable).
+2. **Actualización del Modelo `Product`:** Actualizar fillables, casts y scopes en [`app/Models/Product.php`](../app/Models/Product.php).
+3. **Servicio Mapper:** Crear `App\Services\MercadoLibre\MercadoLibreProductMapper` que aplique las reglas de transformación definidas en el documento de mapeo.
+4. **Comando Sincronizador de Catálogo:** Crear comando Artisan `php artisan meli:sync-catalog` para transformar los artículos crudos en registros de `products`, actualizando stock con `StockService` y precios con `PriceService`.
+5. **Pruebas Automatizadas:** Crear `tests/Feature/MercadoLibreSyncCatalogTest.php`.
 
 ---
 
