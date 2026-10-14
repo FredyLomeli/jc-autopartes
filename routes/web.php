@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MercadoLibreAuthController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -57,6 +58,13 @@ Route::prefix('admin')
         Route::get('/pedidos', [PlaceholderModuleController::class, 'orders'])->name('orders.index');
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
         Route::get('/configuracion', [PlaceholderModuleController::class, 'settings'])->name('settings.index');
+
+        // Integración con Mercado Libre (/admin/integraciones/mercadolibre)
+        Route::prefix('integraciones/mercadolibre')->name('mercadolibre.')->group(function () {
+            Route::get('/conectar', [MercadoLibreAuthController::class, 'redirect'])->name('connect');
+            Route::get('/callback', [MercadoLibreAuthController::class, 'callback'])->name('callback');
+            Route::delete('/desconectar', [MercadoLibreAuthController::class, 'disconnect'])->name('disconnect');
+        });
     });
 
 Route::middleware('auth')->group(function () {
