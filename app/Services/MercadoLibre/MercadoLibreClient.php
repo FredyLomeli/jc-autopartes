@@ -34,6 +34,53 @@ class MercadoLibreClient implements MarketplaceClient
     }
 
     /**
+     * Obtiene en bloque (multi-get) el detalle de múltiples publicaciones en lotes de hasta 20 ítems (/items?ids=...).
+     *
+     * @param  array<int, string>  $externalIds
+     * @return array<int, array<string, mixed>>
+     */
+    public function fetchListings(array $externalIds): array
+    {
+        if (empty($externalIds)) {
+            return [];
+        }
+
+        $allListings = [];
+        $chunks = array_chunk(array_values(array_unique($externalIds)), 20);
+
+        foreach ($chunks as $chunk) {
+            $idsParam = implode(',', $chunk);
+            $response = $this->authenticatedRequest()->get("{$this->apiBaseUrl}/items", [
+                'ids' => $idsParam,
+            ]);
+
+            if ($response->successful()) {
+                $items = $response->json();
+                if (is_array($items)) {
+                    foreach ($items as $entry) {
+                        if (isset($entry['code']) && $entry['code'] === 200 && isset($entry['body'])) {
+                            $allListings[] = (array) $entry['body'];
+                        } elseif (! isset($entry['code']) && is_array($entry)) {
+                            $allListings[] = $entry;
+                        }
+                    }
+                }
+            } else {
+                // Si falla el multi-get, recurrir a fetch individual para no perder el lote completo
+                foreach ($chunk as $singleId) {
+                    try {
+                        $allListings[] = $this->fetchListing((string) $singleId);
+                    } catch (\Throwable) {
+                        // Se omiten ítems individuales con error para registrarlos en el reporte
+                    }
+                }
+            }
+        }
+
+        return $allListings;
+    }
+
+    /**
      * Busca los IDs de publicaciones del usuario vendedor (/users/{user_id}/items/search).
      *
      * @param  array<string, mixed>  $params
@@ -57,6 +104,43 @@ class MercadoLibreClient implements MarketplaceClient
         }
 
         return (array) $response->json();
+    }
+
+    /**
+     * Busca publicaciones usando el cursor scroll_id para cuentas masivas (12,000+ productos).
+     *
+     * @return array{results: array<int, string>, scroll_id: ?string, total: int}
+     */
+    public function searchListingsWithScroll(
+        string $userId,
+        ?string $scrollId = null,
+        int $limit = 50,
+        string $status = 'active'
+    ): array {
+        $params = [
+            'status' => $status,
+            'search_type' => 'scan',
+            'limit' => min(100, max(1, $limit)),
+        ];
+
+        if (! empty($scrollId)) {
+            $params['scroll_id'] = $scrollId;
+        }
+
+        $response = $this->authenticatedRequest()
+            ->get("{$this->apiBaseUrl}/users/{$userId}/items/search", $params);
+
+        if ($response->failed()) {
+            $this->handleApiError($response, "Error al escanear publicaciones masivas del vendedor {$userId}");
+        }
+
+        $data = (array) $response->json();
+
+        return [
+            'results' => (array) ($data['results'] ?? []),
+            'scroll_id' => $data['scroll_id'] ?? null,
+            'total' => (int) ($data['paging']['total'] ?? count($data['results'] ?? [])),
+        ];
     }
 
     /**
@@ -105,7 +189,7 @@ class MercadoLibreClient implements MarketplaceClient
 
         return Http::withToken($accessToken)
             ->acceptJson()
-            ->timeout(15);
+            ->timeout(20);
     }
 
     private function handleApiError(Response $response, string $contextMessage): void

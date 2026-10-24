@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import MercadoLibreBatchSyncModal from '@/Components/Admin/MercadoLibreBatchSyncModal.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -52,22 +53,10 @@ const confirmDelete = (item) => {
     }
 };
 
-const isSyncing = ref(false);
-const syncMercadoLibre = () => {
-    if (isSyncing.value) return;
-    if (window.confirm('¿Deseas sincronizar el catálogo con las publicaciones de Mercado Libre ahora?')) {
-        isSyncing.value = true;
-        router.post(
-            route('admin.products.sync-meli'),
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => {
-                    isSyncing.value = false;
-                },
-            }
-        );
-    }
+const showSyncModal = ref(false);
+
+const handleSyncCompleted = () => {
+    router.reload({ preserveScroll: true });
 };
 </script>
 
@@ -82,15 +71,14 @@ const syncMercadoLibre = () => {
             <div class="flex items-center gap-2">
                 <button
                     type="button"
-                    @click="syncMercadoLibre"
-                    :disabled="isSyncing"
-                    class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-extrabold px-3.5 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50"
-                    title="Importar y actualizar publicaciones de Mercado Libre"
+                    @click="showSyncModal = true"
+                    class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-extrabold px-3.5 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-sm inline-flex items-center gap-1.5"
+                    title="Sincronizador masivo de Mercado Libre por lotes"
                 >
-                    <svg class="w-4 h-4" :class="{ 'animate-spin': isSyncing }" viewBox="0 0 24 24" fill="currentColor">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
                     </svg>
-                    <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar ML' }}</span>
+                    <span>Sincronizar Lotes ML</span>
                 </button>
                 <Link
                     :href="route('admin.products.create')"
@@ -368,5 +356,10 @@ const syncMercadoLibre = () => {
                 </div>
             </div>
         </div>
+        <!-- Modal de Sincronización Masiva por Lotes -->
+        <MercadoLibreBatchSyncModal
+            v-model="showSyncModal"
+            @completed="handleSyncCompleted"
+        />
     </AdminLayout>
 </template>

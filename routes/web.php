@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MercadoLibreAuthController;
+use App\Http\Controllers\Admin\MercadoLibreSyncController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\Admin\ProductController;
@@ -72,6 +73,9 @@ Route::prefix('admin')
             Route::get('/conectar', [MercadoLibreAuthController::class, 'redirect'])->name('connect');
             Route::get('/callback', [MercadoLibreAuthController::class, 'callback'])->name('callback');
             Route::delete('/desconectar', [MercadoLibreAuthController::class, 'disconnect'])->name('disconnect');
+            Route::post('/sincronizar-lote', [MercadoLibreSyncController::class, 'processChunk'])->name('sync-chunk');
+            Route::get('/reporte', [MercadoLibreSyncController::class, 'report'])->name('sync-report');
+            Route::post('/reiniciar-reporte', [MercadoLibreSyncController::class, 'reset'])->name('sync-reset');
         });
     });
 

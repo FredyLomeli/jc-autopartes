@@ -84,6 +84,40 @@ class MercadoLibreServiceTest extends TestCase
         $this->assertEquals(2, $listing['available_quantity']);
     }
 
+    public function test_client_fetch_listings_multi_get(): void
+    {
+        Http::fake([
+            'https://api.mercadolibre.com/items?ids=MLM101%2CMLM102' => Http::response([
+                [
+                    'code' => 200,
+                    'body' => [
+                        'id' => 'MLM101',
+                        'title' => 'Cofre Versa 2018',
+                        'price' => 3200,
+                    ],
+                ],
+                [
+                    'code' => 200,
+                    'body' => [
+                        'id' => 'MLM102',
+                        'title' => 'Faro Izquierdo Versa 2018',
+                        'price' => 1400,
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $oauthMock = $this->createMock(MercadoLibreOAuthService::class);
+        $oauthMock->method('getValidAccessToken')->willReturn('fake_valid_access_token');
+
+        $client = new MercadoLibreClient($oauthMock);
+        $listings = $client->fetchListings(['MLM101', 'MLM102']);
+
+        $this->assertCount(2, $listings);
+        $this->assertEquals('MLM101', $listings[0]['id']);
+        $this->assertEquals('MLM102', $listings[1]['id']);
+    }
+
     public function test_client_search_listings_with_token(): void
     {
         Http::fake([
@@ -102,6 +136,27 @@ class MercadoLibreServiceTest extends TestCase
 
         $this->assertCount(3, $results['results']);
         $this->assertEquals(['MLM1001', 'MLM1002', 'MLM1003'], $results['results']);
+    }
+
+    public function test_client_search_listings_with_scroll(): void
+    {
+        Http::fake([
+            'https://api.mercadolibre.com/users/998877/items/search*search_type=scan*' => Http::response([
+                'results' => ['MLM1001', 'MLM1002'],
+                'scroll_id' => 'next_scroll_token_123',
+                'paging' => ['total' => 12000, 'limit' => 50],
+            ], 200),
+        ]);
+
+        $oauthMock = $this->createMock(MercadoLibreOAuthService::class);
+        $oauthMock->method('getValidAccessToken')->willReturn('fake_valid_access_token');
+
+        $client = new MercadoLibreClient($oauthMock);
+        $results = $client->searchListingsWithScroll('998877', null, 50);
+
+        $this->assertCount(2, $results['results']);
+        $this->assertEquals('next_scroll_token_123', $results['scroll_id']);
+        $this->assertEquals(12000, $results['total']);
     }
 
     public function test_client_throws_exception_when_not_authenticated(): void
