@@ -16,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Contracts\MarketplaceClient::class,
             \App\Services\MercadoLibre\MercadoLibreClient::class
         );
+
+        $this->app->bind(
+            \App\Contracts\PaymentGateway::class,
+            \App\Services\Payments\MercadoPagoPaymentGateway::class
+        );
     }
 
     /**

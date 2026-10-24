@@ -62,6 +62,68 @@ class StockService
         });
     }
 
+    /**
+     * Descuenta existencias de un artículo de forma atómica con bloqueo pesimista contra condiciones de carrera.
+     *
+     * @throws \App\Exceptions\InsufficientStockException
+     */
+    public function decrementStock(Product|int $product, int $quantity = 1): Product
+    {
+        if ($quantity <= 0) {
+            throw new InvalidArgumentException('La cantidad a descontar debe ser mayor a cero.');
+        }
+
+        $productId = $product instanceof Product ? $product->id : (int) $product;
+
+        return DB::transaction(function () use ($productId, $quantity, $product) {
+            /** @var Product $locked */
+            $locked = Product::query()->lockForUpdate()->findOrFail($productId);
+
+            if ($locked->stock < $quantity) {
+                throw new \App\Exceptions\InsufficientStockException(
+                    "Existencia insuficiente para la refacción «{$locked->title}» (SKU: {$locked->sku}). Solicitado: {$quantity}, disponible: {$locked->stock}.",
+                    productId: $locked->id,
+                    requested: $quantity,
+                    available: $locked->stock
+                );
+            }
+
+            $locked->stock -= $quantity;
+            $locked->save();
+
+            if ($product instanceof Product) {
+                $product->stock = $locked->stock;
+            }
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Incrementa existencias de un artículo (ej. cancelación de orden o devolución) con bloqueo pesimista.
+     */
+    public function incrementStock(Product|int $product, int $quantity = 1): Product
+    {
+        if ($quantity <= 0) {
+            throw new InvalidArgumentException('La cantidad a reponer debe ser mayor a cero.');
+        }
+
+        $productId = $product instanceof Product ? $product->id : (int) $product;
+
+        return DB::transaction(function () use ($productId, $quantity, $product) {
+            /** @var Product $locked */
+            $locked = Product::query()->lockForUpdate()->findOrFail($productId);
+            $locked->stock += $quantity;
+            $locked->save();
+
+            if ($product instanceof Product) {
+                $product->stock = $locked->stock;
+            }
+
+            return $locked;
+        });
+    }
+
     private function resolveProduct(Product|int $product): Product
     {
         if ($product instanceof Product) {

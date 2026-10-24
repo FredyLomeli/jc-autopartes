@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MercadoLibreAuthController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -26,6 +27,10 @@ Route::delete('/carrito/{product}', [CartController::class, 'remove'])->name('ca
 Route::delete('/carrito', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/checkout/exito', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/fallo', [CheckoutController::class, 'failure'])->name('checkout.failure');
+Route::get('/checkout/pendiente', [CheckoutController::class, 'pending'])->name('checkout.pending');
 
 // Páginas informativas y legales
 Route::get('/contacto', [PageController::class, 'contact'])->name('pages.contact');
@@ -56,7 +61,9 @@ Route::prefix('admin')
         Route::put('/articulos/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/articulos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
-        Route::get('/pedidos', [PlaceholderModuleController::class, 'orders'])->name('orders.index');
+        Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/pedidos/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::patch('/pedidos/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
         Route::get('/configuracion', [PlaceholderModuleController::class, 'settings'])->name('settings.index');
 

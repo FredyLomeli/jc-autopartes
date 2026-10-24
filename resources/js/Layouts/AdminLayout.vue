@@ -40,7 +40,7 @@ const navItems = [
         routeName: 'admin.orders.index',
         matchPrefix: '/admin/pedidos',
         exact: false,
-        badge: 'Próximamente',
+        badge: null,
     },
     {
         name: 'Clientes',

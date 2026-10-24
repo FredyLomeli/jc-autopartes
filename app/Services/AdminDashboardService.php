@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Order;
 use App\Models\Product;
+use Throwable;
 
 class AdminDashboardService
 {
@@ -52,6 +54,19 @@ class AdminDashboardService
             ];
         })->values()->all();
 
+        $paidOrdersCount = 0;
+        $paidRevenue = 0.0;
+        $preparingOrdersCount = 0;
+
+        try {
+            $paidQuery = Order::query()->where('payment_status', Order::PAYMENT_PAID);
+            $paidOrdersCount = (clone $paidQuery)->count();
+            $paidRevenue = (float) (clone $paidQuery)->sum('total');
+            $preparingOrdersCount = Order::query()->where('order_status', Order::STATUS_PREPARING)->count();
+        } catch (Throwable) {
+            // Entorno offline / testing
+        }
+
         return [
             'catalogStats' => [
                 'total_products' => $totalProducts,
@@ -60,18 +75,24 @@ class AdminDashboardService
                 'total_stock_units' => $totalStockUnits,
                 'formatted_inventory_value' => $this->priceService->format($inventoryValue),
             ],
+            'orderStats' => [
+                'paid_orders' => $paidOrdersCount,
+                'total_revenue' => $paidRevenue,
+                'formatted_revenue' => $this->priceService->format($paidRevenue),
+                'preparing_orders' => $preparingOrdersCount,
+            ],
             'demoCards' => [
                 [
-                    'label' => 'Ventas Web del Mes',
-                    'value' => '$148,500.00 MXN',
-                    'subtext' => '14 órdenes completadas en el periodo actual',
-                    'badge' => 'Mensual',
+                    'label' => 'Ventas Web Pagadas',
+                    'value' => $this->priceService->format($paidRevenue),
+                    'subtext' => "{$paidOrdersCount} órdenes acreditadas en línea",
+                    'badge' => 'Fase C Real',
                 ],
                 [
                     'label' => 'Pedidos por Despachar',
-                    'value' => '5 envíos',
-                    'subtext' => 'En preparación para recolección de paquetería',
-                    'badge' => 'Logística',
+                    'value' => "{$preparingOrdersCount} pedidos",
+                    'subtext' => 'En preparación para paquetería o entrega',
+                    'badge' => 'Almacén',
                 ],
                 [
                     'label' => 'Consultas de WhatsApp Hoy',

@@ -6,10 +6,11 @@ Este proyecto combina un **sitio público renderizado en servidor** (Blade + Tai
 
 ---
 
-## 🚀 Estado del Proyecto — Fases A0 y B Completadas (100%)
+## 🚀 Estado del Proyecto — Fases A0, B y C Completadas (100%)
 
 - **Fase A0: Andamiaje visual, capa pública, carrito y administración en Laravel** — Concluida al 100% y respaldada por 50 pruebas automatizadas. Ver detalles en [`docs/cierre_fase_A0.md`](docs/cierre_fase_A0.md).
 - **Fase B: Sincronización de Lectura con Mercado Libre y Modelado Definitivo del Catálogo** — Concluida al 100%, certificada con OAuth 2.0 seguro, ingesta cruda, normalización de catálogo automotriz, panel administrativo y comandos de consola. Ver detalles en [`docs/cierre_fase_B.md`](docs/cierre_fase_B.md).
+- **Fase C: Pasarela de Pago con Mercado Pago, Checkout Seguro y Gestión de Pedidos** — Concluida al 100%, con flujo transaccional seguro, decremento atómico de inventario (`lockForUpdate`), Webhook IPN verificado criptográficamente con HMAC-SHA256, correos transaccionales, panel de pedidos en Vue 3 y páginas legales formalizadas. Ver detalles en [`docs/cierre_fase_C.md`](docs/cierre_fase_C.md).
 
 ---
 

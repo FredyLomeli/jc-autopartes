@@ -22,4 +22,11 @@ interface PaymentGateway
      * @param  string  $rawBody
      */
     public function verifyWebhookSignature(array $headers, string $rawBody): bool;
+
+    /**
+     * Obtiene los detalles y estado de un pago directamente de la pasarela.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPaymentDetails(string|int $paymentId): array;
 }
