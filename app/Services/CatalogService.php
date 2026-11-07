@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -179,6 +180,39 @@ class CatalogService
 
         if (isset($filters['max_price']) && $filters['max_price'] !== '' && is_numeric($filters['max_price'])) {
             $query->where('price', '<=', (float) $filters['max_price']);
+        }
+
+        // Filtro de Promociones / Ofertas activas
+        if (! empty($filters['ofertas'])) {
+            $activePromos = Promotion::query()
+                ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($q) {
+                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+                })
+                ->get();
+
+            $hasGlobalPromo = $activePromos->contains(fn ($p) => $p->scope_type === 'all');
+
+            if (! $hasGlobalPromo) {
+                if ($activePromos->isEmpty()) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $categories = $activePromos->where('scope_type', 'category')->pluck('scope_value')->filter()->values();
+                    $brands = $activePromos->where('scope_type', 'brand')->pluck('scope_value')->filter()->values();
+
+                    $query->where(function ($sub) use ($categories, $brands) {
+                        if ($categories->isNotEmpty()) {
+                            $sub->orWhereIn('category', $categories);
+                        }
+                        if ($brands->isNotEmpty()) {
+                            $sub->orWhereIn('vehicle_brand', $brands);
+                        }
+                    });
+                }
+            }
         }
 
         $sort = (string) ($filters['sort'] ?? 'recent');

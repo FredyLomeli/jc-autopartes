@@ -118,8 +118,7 @@ class CartAndCheckoutTest extends TestCase
         $this->assertSame(1, substr_count($response->getContent(), '<h1'));
         $response->assertSee($product->title, false);
         $response->assertSee('$37,000.00 MXN', false);
-        $response->assertSee('name="postal_code"', false);
-        $response->assertSee('Para factura, escríbenos por WhatsApp', false);
-        $response->assertSee('Disponible en la siguiente etapa', false);
+        $response->assertSee('name="shipping_postal_code"', false);
+        $response->assertSee('Mercado Pago', false);
     }
 }

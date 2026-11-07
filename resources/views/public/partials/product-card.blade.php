@@ -3,8 +3,10 @@
     $priceService = $priceService ?? app(\App\Services\PriceService::class);
     $stockService = $stockService ?? app(\App\Services\StockService::class);
 
-    $unitPrice = $priceService->getUnitPrice($product);
-    $formattedPrice = $priceService->format($unitPrice);
+    $promoDetails = $priceService->getPromotionDetails($product);
+    $hasPromo = $promoDetails['has_promotion'];
+    $unitPrice = $promoDetails['final_price'];
+    $formattedPrice = $promoDetails['formatted_final_price'];
     $availableStock = $stockService->getAvailableStock($product);
     $hasStock = $stockService->hasStock($product, 1);
     $warrantyDays = $product->warrantyDays();
@@ -29,6 +31,14 @@
                     Garantía {{ $warrantyDays }} días
                 </span>
             </div>
+
+            @if($hasPromo)
+                <div class="absolute top-3 right-3 z-10">
+                    <span class="bg-primary text-white font-black px-2 py-0.5 rounded text-xs shadow-md tracking-wider">
+                        {{ $promoDetails['badge_label'] }}
+                    </span>
+                </div>
+            @endif
         </a>
 
         <!-- Información Técnica y Compatibilidad -->
@@ -73,8 +83,16 @@
     <div class="px-4 pb-4 pt-2.5 border-t border-border/60 flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="block text-[10px] text-gray-500 uppercase font-semibold leading-none mb-1">Precio de contado</span>
-                <span class="block text-base sm:text-lg font-extrabold text-dark whitespace-nowrap leading-none">{{ $formattedPrice }}</span>
+                @if($hasPromo)
+                    <div class="flex items-center gap-1.5 leading-none mb-1">
+                        <span class="text-[10px] text-gray-400 line-through font-bold">{{ $promoDetails['formatted_strike_price'] }}</span>
+                        <span class="text-[10px] font-extrabold text-primary uppercase">Oferta</span>
+                    </div>
+                    <span class="block text-base sm:text-lg font-black text-primary whitespace-nowrap leading-none">{{ $formattedPrice }}</span>
+                @else
+                    <span class="block text-[10px] text-gray-500 uppercase font-semibold leading-none mb-1">Precio de contado</span>
+                    <span class="block text-base sm:text-lg font-extrabold text-dark whitespace-nowrap leading-none">{{ $formattedPrice }}</span>
+                @endif
             </div>
             <div class="text-right shrink-0">
                 @if($hasStock)

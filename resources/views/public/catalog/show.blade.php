@@ -115,8 +115,23 @@
                         <!-- Precio y Estado de Existencia (PriceService + StockService) -->
                         <div class="bg-surface rounded-card border border-border p-4 flex flex-wrap items-center justify-between gap-4">
                             <div>
-                                <span class="block text-xs font-semibold uppercase text-gray-500">Precio de Contado</span>
-                                <span class="text-2xl sm:text-3xl font-extrabold text-dark">{{ $formattedPrice }}</span>
+                                @if(!empty($promotionDetails['has_promotion']))
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-xs text-gray-400 line-through font-bold">
+                                            {{ $promotionDetails['formatted_strike_price'] }}
+                                        </span>
+                                        <span class="bg-primary text-white text-[11px] font-black px-2 py-0.5 rounded tracking-wide">
+                                            {{ $promotionDetails['badge_label'] }}
+                                        </span>
+                                    </div>
+                                    <span class="text-2xl sm:text-3xl font-black text-primary">{{ $promotionDetails['formatted_final_price'] }}</span>
+                                    <span class="block text-xs font-semibold text-emerald-700 mt-1">
+                                        ¡Ahorras {{ $promotionDetails['formatted_savings'] }} ({{ $promotionDetails['visible_discount_percentage'] }}% OFF)!
+                                    </span>
+                                @else
+                                    <span class="block text-xs font-semibold uppercase text-gray-500">Precio de Contado</span>
+                                    <span class="text-2xl sm:text-3xl font-extrabold text-dark">{{ $formattedPrice }}</span>
+                                @endif
                             </div>
                             <div class="text-right">
                                 @if($hasStock)

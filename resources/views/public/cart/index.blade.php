@@ -152,15 +152,61 @@
                             <span>Subtotal de mercancía</span>
                             <span class="font-bold text-dark whitespace-nowrap">{{ $cart['formattedSubtotal'] }}</span>
                         </div>
+                        @if(!empty($cart['coupon']))
+                            <div class="flex items-center justify-between text-emerald-700 font-bold">
+                                <span>Cupón ({{ $cart['coupon']['code'] }})</span>
+                                <span class="whitespace-nowrap">-{{ $cart['formattedDiscount'] }}</span>
+                            </div>
+                        @endif
                         <div class="flex items-center justify-between text-gray-600">
                             <span>Envío por paquetería</span>
                             <span class="text-xs font-semibold text-gray-500">Se ingresa C.P. en Checkout</span>
                         </div>
                     </div>
 
+                    <!-- Cupón de Descuento -->
+                    <div class="pt-2 border-t border-border">
+                        @if(!empty($cart['coupon']))
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-base p-2.5 flex items-center justify-between">
+                                <div>
+                                    <span class="block text-xs font-black text-emerald-800">Cupón: <span class="font-mono">{{ $cart['coupon']['code'] }}</span></span>
+                                    <span class="text-[11px] text-emerald-600 font-semibold">Ahorras {{ $cart['formattedDiscount'] }}</span>
+                                </div>
+                                <form action="{{ route('cart.coupon.remove') }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-bold underline" title="Quitar cupón">
+                                        Quitar
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <form action="{{ route('cart.coupon.apply') }}" method="POST" class="space-y-1.5">
+                                @csrf
+                                <label for="cart-coupon-code" class="block text-xs font-bold uppercase text-gray-600">¿Tienes un cupón de descuento?</label>
+                                <div class="flex gap-2">
+                                    <input
+                                        id="cart-coupon-code"
+                                        type="text"
+                                        name="coupon_code"
+                                        placeholder="Código (ej. JC10)"
+                                        class="flex-1 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-mono uppercase text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                                        required
+                                    >
+                                    <button
+                                        type="submit"
+                                        class="bg-dark hover:bg-gray-800 text-white text-xs font-bold px-3 py-1.5 rounded-base uppercase transition-colors shrink-0"
+                                    >
+                                        Aplicar
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
+                    </div>
+
                     <div class="border-t border-border pt-4 flex items-baseline justify-between">
                         <span class="text-sm font-extrabold uppercase text-dark">Total parcial</span>
-                        <span class="text-xl font-extrabold text-primary whitespace-nowrap">{{ $cart['formattedSubtotal'] }}</span>
+                        <span class="text-xl font-extrabold text-primary whitespace-nowrap">{{ $cart['formattedTotal'] ?? $cart['formattedSubtotal'] }}</span>
                     </div>
 
                     <div class="space-y-2.5 pt-2">

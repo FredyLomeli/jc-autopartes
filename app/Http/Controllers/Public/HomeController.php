@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\HomeBanner;
 use App\Services\CatalogService;
 use App\Services\PriceService;
 use App\Services\StockService;
@@ -18,10 +19,17 @@ class HomeController extends Controller
 
     public function index(): View
     {
+        $banners = HomeBanner::query()
+            ->where('is_active', true)
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
         $filterOptions = $this->catalogService->getFilterOptions();
         $featuredProducts = $this->catalogService->getFeaturedProducts(8);
 
         return view('public.home', [
+            'banners' => $banners,
             'brands' => $filterOptions['brands'],
             'models' => $filterOptions['models'],
             'modelsByBrand' => $filterOptions['modelsByBrand'],

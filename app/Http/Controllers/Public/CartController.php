@@ -70,4 +70,26 @@ class CartController extends Controller
 
         return redirect()->route('cart.index')->with('success', 'Se vació el carrito de compras.');
     }
+
+    public function applyCoupon(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'coupon_code' => ['required', 'string', 'max:50'],
+        ]);
+
+        $result = $this->cartService->applyCoupon($validated['coupon_code']);
+
+        if (! $result['ok']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
+    }
+
+    public function removeCoupon(): RedirectResponse
+    {
+        $this->cartService->removeCoupon();
+
+        return redirect()->back()->with('success', 'El cupón de descuento fue removido.');
+    }
 }

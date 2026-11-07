@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Session;
 class CartService
 {
     private const SESSION_KEY = 'cart.items';
+    private const COUPON_SESSION_KEY = 'cart.coupon';
 
     public function __construct(
         private readonly StockService $stockService,
@@ -109,11 +110,37 @@ class CartService
 
         Session::put(self::SESSION_KEY, $normalizedSession);
 
+        $couponCode = Session::get(self::COUPON_SESSION_KEY);
+        $couponData = null;
+        $discountAmount = 0.0;
+
+        if ($couponCode && $subtotal > 0) {
+            $couponResult = $this->priceService->applyCoupon($couponCode, $subtotal);
+            if ($couponResult['valid']) {
+                $discountAmount = $couponResult['discount'];
+                $couponData = [
+                    'code' => $couponResult['coupon']->code,
+                    'discount' => $discountAmount,
+                    'formattedDiscount' => $this->priceService->format($discountAmount),
+                    'message' => $couponResult['message'],
+                ];
+            } else {
+                Session::forget(self::COUPON_SESSION_KEY);
+            }
+        }
+
+        $total = max(0.0, round($subtotal - $discountAmount, 2));
+
         return [
             'items' => $hydratedItems,
             'totalQuantity' => $totalQuantity,
             'subtotal' => $subtotal,
             'formattedSubtotal' => $this->priceService->format($subtotal),
+            'coupon' => $couponData,
+            'discount' => $discountAmount,
+            'formattedDiscount' => $this->priceService->format($discountAmount),
+            'total' => $total,
+            'formattedTotal' => $this->priceService->format($total),
         ];
     }
 
@@ -250,8 +277,54 @@ class CartService
         Session::put(self::SESSION_KEY, $stored);
     }
 
+    /**
+     * Aplica un código de cupón al carrito validándolo mediante PriceService.
+     *
+     * @return array{ok: bool, message: string, discount?: float, formattedDiscount?: string}
+     */
+    public function applyCoupon(string $code): array
+    {
+        $cart = $this->getCart();
+        if ($cart['subtotal'] <= 0) {
+            return [
+                'ok' => false,
+                'message' => 'Agrega al menos una refacción al carrito antes de aplicar un cupón.',
+            ];
+        }
+
+        $cleanCode = trim($code);
+        $result = $this->priceService->applyCoupon($cleanCode, $cart['subtotal']);
+
+        if (! $result['valid']) {
+            Session::forget(self::COUPON_SESSION_KEY);
+
+            return [
+                'ok' => false,
+                'message' => $result['message'],
+            ];
+        }
+
+        Session::put(self::COUPON_SESSION_KEY, $result['coupon']->code);
+
+        return [
+            'ok' => true,
+            'message' => $result['message'],
+            'discount' => $result['discount'],
+            'formattedDiscount' => $this->priceService->format($result['discount']),
+        ];
+    }
+
+    /**
+     * Remueve el cupón activo de la sesión del carrito.
+     */
+    public function removeCoupon(): void
+    {
+        Session::forget(self::COUPON_SESSION_KEY);
+    }
+
     public function clear(): void
     {
         Session::forget(self::SESSION_KEY);
+        Session::forget(self::COUPON_SESSION_KEY);
     }
 }

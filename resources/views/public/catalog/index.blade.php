@@ -40,6 +40,21 @@
 
     <!-- Contenido Principal del Catálogo (Sidebar de Filtros + Grid) -->
     <div x-data="{ filtersOpen: false }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if(!empty($filters['ofertas']))
+            <div class="mb-6 bg-gradient-to-r from-red-600 via-rose-700 to-red-800 text-white rounded-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🔥</span>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-black tracking-tight leading-tight">Campañas de Oferta y Promociones Activas</h2>
+                        <p class="text-xs text-red-100">Mostrando piezas seleccionadas con descuento especial garantizado por tiempo limitado.</p>
+                    </div>
+                </div>
+                <a href="{{ route('catalog.index') }}" class="text-xs bg-white text-dark hover:bg-gray-100 font-bold px-3.5 py-2 rounded-base shrink-0 self-start sm:self-auto shadow-sm">
+                    Ver todo el catálogo general
+                </a>
+            </div>
+        @endif
+
         <!-- Botón de Filtros en Móvil -->
         <div class="lg:hidden mb-4 flex items-center justify-between gap-3">
             <button
@@ -80,6 +95,21 @@
                 </div>
 
                 <form action="{{ route('catalog.index') }}" method="GET" class="space-y-4">
+                    <!-- Filtro Especial de Ofertas -->
+                    <div class="bg-red-50 border border-red-200 rounded-base p-2.5">
+                        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-black text-red-900">
+                            <input
+                                type="checkbox"
+                                name="ofertas"
+                                value="1"
+                                @checked(!empty($filters['ofertas']))
+                                class="rounded border-red-300 text-primary focus:ring-primary h-4 w-4"
+                                onchange="this.form.submit()"
+                            >
+                            <span>🔥 Ver solo refacciones en Oferta</span>
+                        </label>
+                    </div>
+
                     <!-- Palabra clave o SKU -->
                     <div>
                         <label for="filter-q" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">

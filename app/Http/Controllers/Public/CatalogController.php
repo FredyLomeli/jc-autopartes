@@ -29,6 +29,7 @@ class CatalogController extends Controller
             'min_price',
             'max_price',
             'sort',
+            'ofertas',
         ]);
 
         $filterOptions = $this->catalogService->getFilterOptions();
@@ -65,11 +66,14 @@ class CatalogController extends Controller
         $whatsappMessage = "Hola JC Autopartes, me interesa la pieza: {$product->title} (SKU: {$product->sku}) para {$product->vehicle_brand} {$product->vehicle_model} {$product->year_start}-{$product->year_end}. ¿Sigue disponible?";
         $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($whatsappMessage);
 
+        $promotionDetails = $this->priceService->getPromotionDetails($product);
+
         return view('public.catalog.show', [
             'product' => $product,
             'relatedProducts' => $relatedProducts,
             'unitPrice' => $unitPrice,
             'formattedPrice' => $formattedPrice,
+            'promotionDetails' => $promotionDetails,
             'availableStock' => $availableStock,
             'hasStock' => $hasStock,
             'whatsappUrl' => $whatsappUrl,

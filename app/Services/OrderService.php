@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\InsufficientStockException;
 use App\Mail\OrderConfirmedCustomerMail;
 use App\Mail\OrderNotificationAdminMail;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -69,12 +70,13 @@ class OrderService
             : Order::DELIVERY_SHIPPING;
 
         $itemsSubtotal = round((float) ($cart['subtotal'] ?? 0.0), 2);
+        $discount = round((float) ($cart['discount'] ?? 0.0), 2);
         $shippingCost = $deliveryMethod === Order::DELIVERY_PICKUP
             ? 0.00
             : round((float) ($customerData['shipping_cost'] ?? 0.0), 2);
-        $total = round($itemsSubtotal + $shippingCost, 2);
+        $total = max(0.0, round($itemsSubtotal - $discount + $shippingCost, 2));
 
-        return DB::transaction(function () use ($customerData, $items, $deliveryMethod, $itemsSubtotal, $shippingCost, $total) {
+        return DB::transaction(function () use ($customerData, $items, $deliveryMethod, $itemsSubtotal, $discount, $shippingCost, $total, $cart) {
             $orderNumber = $this->generateOrderNumber();
 
             /** @var Order $order */
@@ -97,11 +99,17 @@ class OrderService
                 'payment_status' => Order::PAYMENT_PENDING,
                 'order_status' => Order::STATUS_PENDING,
                 'payment_gateway' => 'mercadopago',
-                'metadata' => [
+                'metadata' => array_filter([
                     'ip_address' => request()->ip(),
                     'user_agent' => request()->userAgent(),
-                ],
+                    'coupon' => $cart['coupon'] ?? null,
+                    'discount_amount' => $discount > 0 ? $discount : null,
+                ]),
             ]);
+
+            if (! empty($cart['coupon']['code'])) {
+                Coupon::query()->where('code', $cart['coupon']['code'])->increment('used_count');
+            }
 
             foreach ($items as $item) {
                 /** @var Product|null $productModel */

@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\MercadoLibreAuthController;
 use App\Http\Controllers\Admin\MercadoLibreSyncController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PromotionController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\CartController;
 use App\Http\Controllers\Public\CatalogController;
@@ -23,9 +27,11 @@ Route::get('/refacciones/{slug}', [CatalogController::class, 'show'])->name('cat
 // Carrito en sesión del servidor y Checkout visual
 Route::get('/carrito', [CartController::class, 'index'])->name('cart.index');
 Route::post('/carrito/agregar', [CartController::class, 'add'])->name('cart.add');
-Route::patch('/carrito/{product}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/carrito/{product}', [CartController::class, 'remove'])->name('cart.remove');
 Route::delete('/carrito', [CartController::class, 'clear'])->name('cart.clear');
+Route::post('/carrito/cupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+Route::delete('/carrito/cupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
+Route::patch('/carrito/{product}', [CartController::class, 'update'])->whereNumber('product')->name('cart.update');
+Route::delete('/carrito/{product}', [CartController::class, 'remove'])->whereNumber('product')->name('cart.remove');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
@@ -35,6 +41,7 @@ Route::get('/checkout/pendiente', [CheckoutController::class, 'pending'])->name(
 
 // Páginas informativas y legales
 Route::get('/contacto', [PageController::class, 'contact'])->name('pages.contact');
+Route::get('/preguntas-frecuentes', [PageController::class, 'faqs'])->name('pages.faqs');
 Route::get('/garantia', [PageController::class, 'warranty'])->name('pages.warranty');
 Route::get('/aviso-de-privacidad', [PageController::class, 'privacy'])->name('pages.privacy');
 Route::get('/terminos-y-condiciones', [PageController::class, 'terms'])->name('pages.terms');
@@ -62,11 +69,35 @@ Route::prefix('admin')
         Route::put('/articulos/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/articulos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
+        // Banners de Inicio (/admin/banners)
+        Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
+        Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
+        Route::put('/banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
+        Route::post('/banners/{banner}/reordenar', [BannerController::class, 'reorder'])->name('banners.reorder');
+        Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+
+        // Preguntas Frecuentes (/admin/faqs)
+        Route::get('/faqs', [FaqController::class, 'index'])->name('faqs.index');
+        Route::post('/faqs', [FaqController::class, 'store'])->name('faqs.store');
+        Route::put('/faqs/{faq}', [FaqController::class, 'update'])->name('faqs.update');
+        Route::post('/faqs/{faq}/reordenar', [FaqController::class, 'reorder'])->name('faqs.reorder');
+        Route::delete('/faqs/{faq}', [FaqController::class, 'destroy'])->name('faqs.destroy');
+
+        // Campañas de Promoción y Cupones (/admin/promociones)
+        Route::get('/promociones', [PromotionController::class, 'index'])->name('promotions.index');
+        Route::post('/promociones', [PromotionController::class, 'storePromotion'])->name('promotions.store');
+        Route::put('/promociones/{promotion}', [PromotionController::class, 'updatePromotion'])->name('promotions.update');
+        Route::delete('/promociones/{promotion}', [PromotionController::class, 'destroyPromotion'])->name('promotions.destroy');
+        Route::post('/cupones', [PromotionController::class, 'storeCoupon'])->name('coupons.store');
+        Route::delete('/cupones/{coupon}', [PromotionController::class, 'destroyCoupon'])->name('coupons.destroy');
+
         Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/pedidos/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/pedidos/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
-        Route::get('/configuracion', [PlaceholderModuleController::class, 'settings'])->name('settings.index');
+        Route::get('/ajustes', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/ajustes', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('/configuracion', [SettingController::class, 'index'])->name('settings.legacy');
 
         // Integración con Mercado Libre (/admin/integraciones/mercadolibre)
         Route::prefix('integraciones/mercadolibre')->name('mercadolibre.')->group(function () {
