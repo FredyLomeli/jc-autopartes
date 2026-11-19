@@ -130,9 +130,12 @@ class PublicPromotionsAndCheckoutStepperTest extends TestCase
 
         $response = $this->get(route('checkout.index'));
         $response->assertStatus(200);
-        $response->assertSee('1. Contacto');
-        $response->assertSee('2. Entrega');
+        $response->assertSee('1. Entrega');
+        $response->assertSee('2. Datos');
         $response->assertSee('3. Pago');
+        $response->assertSee('Envío a Domicilio');
+        $response->assertSee('Servicio Ocurre');
+        $response->assertSee('Recoger en Mostrador');
         $response->assertSee('Mercado Pago');
     }
 }
