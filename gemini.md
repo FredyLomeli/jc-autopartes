@@ -42,3 +42,21 @@
 ## 4. Protección de Datos y Comandos Peligrosos
 - **Credenciales:** Prohibido leer, modificar, exfiltrar o mostrar en consola el contenido de archivos `.env` o llaves privadas. Los secretos viven solo en variables de entorno.
 - **Base de Datos:** Prohibido ejecutar comandos destructivos (`db:wipe`, `drop table`, etc.) sin autorización explícita. Propón siempre migraciones controladas.
+
+---
+
+## 5. Entorno de Ejecución (Docker Homelab)
+Este proyecto (JC Autopartes) se ejecuta dentro de un contenedor Docker en Ubuntu Server (`frexal-homelab1`). **NO** uses Laravel Sail ni ejecutes PHP/Composer/NPM/Artisan directamente en el sistema operativo host.
+
+- **Directorio en el host:** `~/homelab/apps/jc-autopartes/src`
+- **Directorio dentro del contenedor:** `/var/www/html`
+- **Contenedor de la aplicación:** `jc-autopartes-app` (verifica con `docker ps` si difiere)
+- **Base de datos:** MariaDB compartida en el contenedor `mysql-shared` (host DB: `mysql-shared`, puerto `3306`).
+
+### Regla Obligatoria para Ejecutar Comandos
+Todo comando de PHP, Artisan, Composer, Pint, PHPStan, Pest/PHPUnit o NPM **DEBE** ejecutarse anteponiendo `docker exec`:
+- **Artisan / Tests:** `docker exec -i jc-autopartes-app php artisan <comando>` (usa `-i` sin `-t` en ejecuciones no interactivas del agente; agrega `-it` solo en terminal interactiva)
+- **Composer:** `docker exec -i jc-autopartes-app composer <comando>`
+- **NPM / Vite:** `docker exec -i jc-autopartes-app npm <comando>`
+- **Laravel Boost MCP (si está activo):** `docker exec -i jc-autopartes-app php artisan boost:mcp`
+- **Proxy inverso:** La app corre detrás de proxy (p. ej. Cloudflare Tunnel / Nginx). Usa `TRUST_PROXIES=true` (o `*` / IPs específicas) en `.env`, leído mediante `config('app.trust_proxies')`.

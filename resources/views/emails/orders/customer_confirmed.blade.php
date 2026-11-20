@@ -109,6 +109,12 @@
                             <td style="color: #6b7280;">Subtotal de piezas:</td>
                             <td style="text-align: right; font-weight: 700;">${{ number_format($order->items_subtotal, 2) }} MXN</td>
                         </tr>
+                        @if($order->discountAmount() > 0)
+                            <tr>
+                                <td style="color: #059669; font-weight: 700;">Cupón {{ $order->couponCode() ? '(' . $order->couponCode() . ')' : 'aplicado' }}:</td>
+                                <td style="text-align: right; font-weight: 700; color: #059669;">-${{ number_format($order->discountAmount(), 2) }} MXN</td>
+                            </tr>
+                        @endif
                         <tr>
                             <td style="color: #6b7280;">Costo de envío:</td>
                             <td style="text-align: right; font-weight: 700;">

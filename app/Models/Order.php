@@ -115,12 +115,38 @@ class Order extends Model
         };
     }
 
+    public function discountAmount(): float
+    {
+        return round(max(0.0, (float) ($this->metadata['discount_amount'] ?? 0.0)), 2);
+    }
+
+    public function couponCode(): ?string
+    {
+        $code = $this->metadata['coupon']['code'] ?? null;
+
+        return is_string($code) && $code !== '' ? $code : null;
+    }
+
+    public function deliveryVariant(): string
+    {
+        $variant = $this->metadata['delivery_variant'] ?? null;
+
+        if (is_string($variant) && in_array($variant, ['domicilio', 'ocurre', 'pickup'], true)) {
+            return $variant;
+        }
+
+        return $this->delivery_method === self::DELIVERY_PICKUP ? 'pickup' : 'domicilio';
+    }
+
     public function deliveryMethodLabel(): string
     {
-        return match ($this->delivery_method) {
-            self::DELIVERY_PICKUP => 'Recolección en Mostrador (Tepatitlán)',
-            default => 'Envío a Domicilio (Paquetería)',
-        };
+        if ($this->delivery_method === self::DELIVERY_PICKUP) {
+            return 'Recolección en Mostrador (Tepatitlán)';
+        }
+
+        return $this->deliveryVariant() === 'ocurre'
+            ? 'Servicio Ocurre (Paquetería)'
+            : 'Envío a Domicilio (Paquetería)';
     }
 
     /**
@@ -136,28 +162,127 @@ class Order extends Model
             }
         }
 
-        $items = ($this->relationLoaded('items') ? $this->items : collect())->map(fn (OrderItem $item) => [
-            'product_id' => $item->product_id ?? $item->id,
-            'title' => $item->product_title,
-            'sku' => $item->product_sku,
-            'photo_url' => $item->photo_url,
-            'quantity' => $item->quantity,
-            'unit_price' => $item->unit_price,
-        ])->all();
-
         return [
             'order_number' => $this->order_number,
             'customer_name' => $this->customer_name,
             'customer_email' => $this->customer_email,
             'customer_phone' => $this->customer_phone,
             'shipping_cost' => $this->shipping_cost,
-            'items' => $items,
+            'items' => $this->buildPaymentItems(),
             'back_urls' => [
                 'success' => route('checkout.success'),
                 'failure' => route('checkout.failure'),
                 'pending' => route('checkout.pending'),
             ],
         ];
+    }
+
+    /**
+     * Prorratea cualquier descuento de cupón entre los ítems enviados a Mercado Pago
+     * para asegurar que el cobro en Checkout Pro coincida al centavo con el total de la orden.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildPaymentItems(): array
+    {
+        $orderItems = $this->relationLoaded('items') ? $this->items : collect();
+
+        if ($orderItems->isEmpty()) {
+            return [];
+        }
+
+        $discount = $this->discountAmount();
+
+        if ($discount <= 0.0) {
+            return $orderItems->map(fn (OrderItem $item) => [
+                'product_id' => $item->product_id ?? $item->id,
+                'title' => $item->product_title,
+                'sku' => $item->product_sku,
+                'photo_url' => $item->photo_url,
+                'quantity' => max(1, (int) $item->quantity),
+                'unit_price' => round((float) $item->unit_price, 2),
+            ])->all();
+        }
+
+        $lineItems = $orderItems->values()->map(function (OrderItem $item): array {
+            $qty = max(1, (int) $item->quantity);
+            $origCents = max(0, (int) round(((float) $item->unit_price) * $qty * 100));
+
+            return [
+                'item' => $item,
+                'qty' => $qty,
+                'orig_cents' => $origCents,
+            ];
+        })->all();
+
+        $totalOrigCents = array_sum(array_column($lineItems, 'orig_cents'));
+        $subtotalCents = $this->items_subtotal > 0
+            ? (int) round(((float) $this->items_subtotal) * 100)
+            : $totalOrigCents;
+        $discountCents = (int) round($discount * 100);
+        $targetCents = max(0, $subtotalCents - $discountCents);
+
+        if ($totalOrigCents <= 0 || $targetCents <= 0) {
+            return [];
+        }
+
+        $allocated = [];
+        $remainingTarget = $targetCents;
+        $remainingOrig = $totalOrigCents;
+        $lastIdx = count($lineItems) - 1;
+
+        foreach ($lineItems as $idx => $entry) {
+            if ($idx === $lastIdx || $remainingOrig <= 0) {
+                $allocated[$idx] = max(0, $remainingTarget);
+            } else {
+                $share = (int) round($remainingTarget * ($entry['orig_cents'] / $remainingOrig));
+                $share = max(0, min($remainingTarget, $share));
+                $allocated[$idx] = $share;
+                $remainingTarget -= $share;
+                $remainingOrig -= $entry['orig_cents'];
+            }
+        }
+
+        $paymentItems = [];
+        foreach ($lineItems as $idx => $entry) {
+            /** @var OrderItem $item */
+            $item = $entry['item'];
+            $qty = $entry['qty'];
+            $lineCents = $allocated[$idx];
+
+            $baseUnitCents = intdiv($lineCents, $qty);
+            $remCents = $lineCents % $qty;
+
+            if ($remCents === 0) {
+                $paymentItems[] = [
+                    'product_id' => $item->product_id ?? $item->id,
+                    'title' => $item->product_title,
+                    'sku' => $item->product_sku,
+                    'photo_url' => $item->photo_url,
+                    'quantity' => $qty,
+                    'unit_price' => round($baseUnitCents / 100, 2),
+                ];
+            } else {
+                $paymentItems[] = [
+                    'product_id' => $item->product_id ?? $item->id,
+                    'title' => $item->product_title,
+                    'sku' => $item->product_sku,
+                    'photo_url' => $item->photo_url,
+                    'quantity' => $qty - $remCents,
+                    'unit_price' => round($baseUnitCents / 100, 2),
+                ];
+                $paymentItems[] = [
+                    'product_id' => $item->product_id ?? $item->id,
+                    'title' => $item->product_title,
+                    'sku' => $item->product_sku,
+                    'photo_url' => $item->photo_url,
+                    'quantity' => $remCents,
+                    'unit_price' => round(($baseUnitCents + 1) / 100, 2),
+                ];
+            }
+        }
+
+        return $paymentItems;
     }
 }
 

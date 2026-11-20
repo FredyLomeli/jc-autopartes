@@ -124,6 +124,12 @@
                         <span>Subtotal de mercancía:</span>
                         <span class="font-bold text-dark">${{ number_format($order->items_subtotal, 2) }} MXN</span>
                     </div>
+                    @if($order->discountAmount() > 0)
+                        <div class="flex justify-between text-emerald-700 font-bold">
+                            <span>Cupón {{ $order->couponCode() ? '(' . $order->couponCode() . ')' : 'aplicado' }}:</span>
+                            <span>-${{ number_format($order->discountAmount(), 2) }} MXN</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between text-gray-600">
                         <span>Costo de envío:</span>
                         <span class="font-bold text-dark">

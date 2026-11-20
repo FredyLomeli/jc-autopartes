@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Configures reverse proxies trusted by the application (e.g., true or '*'
+    | behind Docker/Cloudflare Tunnel, or a comma-separated list of IPs/CIDRs).
+    |
+    */
+
+    'trust_proxies' => env('TRUST_PROXIES'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

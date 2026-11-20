@@ -68,6 +68,11 @@ class OrderService
         $deliveryMethod = ($customerData['delivery_method'] ?? 'shipping') === 'pickup'
             ? Order::DELIVERY_PICKUP
             : Order::DELIVERY_SHIPPING;
+        $deliveryVariant = match ($customerData['delivery_variant'] ?? null) {
+            'ocurre' => $deliveryMethod === Order::DELIVERY_SHIPPING ? 'ocurre' : 'pickup',
+            'pickup' => 'pickup',
+            default => $deliveryMethod === Order::DELIVERY_PICKUP ? 'pickup' : 'domicilio',
+        };
 
         $itemsSubtotal = round((float) ($cart['subtotal'] ?? 0.0), 2);
         $discount = round((float) ($cart['discount'] ?? 0.0), 2);
@@ -76,7 +81,7 @@ class OrderService
             : round((float) ($customerData['shipping_cost'] ?? 0.0), 2);
         $total = max(0.0, round($itemsSubtotal - $discount + $shippingCost, 2));
 
-        return DB::transaction(function () use ($customerData, $items, $deliveryMethod, $itemsSubtotal, $discount, $shippingCost, $total, $cart) {
+        return DB::transaction(function () use ($customerData, $items, $deliveryMethod, $deliveryVariant, $itemsSubtotal, $discount, $shippingCost, $total, $cart) {
             $orderNumber = $this->generateOrderNumber();
 
             /** @var Order $order */
@@ -102,14 +107,11 @@ class OrderService
                 'metadata' => array_filter([
                     'ip_address' => request()->ip(),
                     'user_agent' => request()->userAgent(),
+                    'delivery_variant' => $deliveryVariant,
                     'coupon' => $cart['coupon'] ?? null,
                     'discount_amount' => $discount > 0 ? $discount : null,
                 ]),
             ]);
-
-            if (! empty($cart['coupon']['code'])) {
-                Coupon::query()->where('code', $cart['coupon']['code'])->increment('used_count');
-            }
 
             foreach ($items as $item) {
                 /** @var Product|null $productModel */
@@ -179,6 +181,12 @@ class OrderService
             }
 
             $lockedOrder->save();
+
+            // Contabilizar uso del cupón únicamente cuando el pago queda acreditado (idempotente)
+            $couponCode = $lockedOrder->couponCode();
+            if ($couponCode !== null) {
+                Coupon::query()->where('code', $couponCode)->increment('used_count');
+            }
 
             // Despacho de notificaciones por correo electrónico (comprador y almacén)
             $this->sendOrderConfirmedEmails($lockedOrder);

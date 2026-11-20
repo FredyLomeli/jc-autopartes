@@ -222,6 +222,88 @@ class CheckoutAndWebhookTest extends TestCase
         $this->assertArrayHasKey('pending', $payload['back_urls']);
     }
 
+    public function test_order_to_payment_payload_prorates_coupon_discount_to_exact_cent(): void
+    {
+        $order = new Order([
+            'order_number' => 'JC-2026-00002',
+            'customer_name' => 'María González',
+            'customer_email' => 'maria@ejemplo.com',
+            'customer_phone' => '3311223344',
+            'items_subtotal' => 1000.00,
+            'shipping_cost' => 250.00,
+            'total' => 1150.00,
+            'metadata' => [
+                'coupon' => ['code' => 'DESC100'],
+                'discount_amount' => 100.00,
+            ],
+        ]);
+
+        // Caso con cantidad = 3 donde 900 / 3 = 300, más un segundo artículo para forzar centavos impares
+        $itemA = new OrderItem([
+            'product_id' => 10,
+            'product_title' => 'Bujía Iridium',
+            'product_sku' => 'JC-BUJ-001',
+            'unit_price' => 200.00,
+            'quantity' => 3,
+            'subtotal' => 600.00,
+        ]);
+        $itemB = new OrderItem([
+            'product_id' => 11,
+            'product_title' => 'Filtro de Aire',
+            'product_sku' => 'JC-FIL-001',
+            'unit_price' => 400.00,
+            'quantity' => 1,
+            'subtotal' => 400.00,
+        ]);
+        $order->setRelation('items', collect([$itemA, $itemB]));
+
+        $payload = $order->toPaymentPayload();
+
+        $itemsTotal = collect($payload['items'])->sum(
+            fn (array $it) => round($it['unit_price'] * $it['quantity'], 2)
+        );
+
+        $this->assertSame(900.00, round($itemsTotal, 2));
+        $this->assertSame(1150.00, round($itemsTotal + $payload['shipping_cost'], 2));
+    }
+
+    public function test_order_to_payment_payload_splits_indivisible_cents_across_quantities(): void
+    {
+        $order = new Order([
+            'order_number' => 'JC-2026-00003',
+            'customer_name' => 'Carlos Ruiz',
+            'customer_email' => 'carlos@ejemplo.com',
+            'customer_phone' => '3311223344',
+            'items_subtotal' => 300.00,
+            'shipping_cost' => 0.00,
+            'total' => 200.00,
+            'metadata' => [
+                'coupon' => ['code' => 'MENOS100'],
+                'discount_amount' => 100.00,
+            ],
+        ]);
+
+        $item = new OrderItem([
+            'product_id' => 15,
+            'product_title' => 'Sensor ABS',
+            'product_sku' => 'JC-SEN-015',
+            'unit_price' => 100.00,
+            'quantity' => 3,
+            'subtotal' => 300.00,
+        ]);
+        $order->setRelation('items', collect([$item]));
+
+        $payload = $order->toPaymentPayload();
+
+        $totalQty = collect($payload['items'])->sum('quantity');
+        $itemsTotal = collect($payload['items'])->sum(
+            fn (array $it) => round($it['unit_price'] * $it['quantity'], 2)
+        );
+
+        $this->assertSame(3, $totalQty);
+        $this->assertSame(200.00, round($itemsTotal, 2));
+    }
+
     public function test_checkout_index_redirects_if_cart_is_empty(): void
     {
         $cartService = $this->createMock(CartService::class);

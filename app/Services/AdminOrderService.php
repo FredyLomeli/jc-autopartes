@@ -165,6 +165,8 @@ class AdminOrderService
             ];
         })->all();
 
+        $discountAmount = $order->discountAmount();
+
         return [
             'id' => $order->id,
             'order_number' => $order->order_number,
@@ -181,6 +183,9 @@ class AdminOrderService
             'shipping_notes' => $order->shipping_notes,
             'items_subtotal' => $order->items_subtotal,
             'formatted_subtotal' => $this->priceService->format($order->items_subtotal),
+            'discount_amount' => $discountAmount,
+            'formatted_discount_amount' => $this->priceService->format($discountAmount),
+            'coupon_code' => $order->couponCode(),
             'shipping_cost' => $order->shipping_cost,
             'formatted_shipping_cost' => $this->priceService->format($order->shipping_cost),
             'total' => $order->total,

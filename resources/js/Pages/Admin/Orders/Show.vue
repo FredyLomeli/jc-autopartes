@@ -264,6 +264,10 @@ const getOrderStatusBadgeClass = (status) => {
                             <span>Subtotal piezas:</span>
                             <span class="font-bold text-dark font-mono">{{ order.formatted_subtotal }}</span>
                         </div>
+                        <div v-if="order.discount_amount > 0" class="flex justify-between text-emerald-700 font-bold">
+                            <span>Cupón {{ order.coupon_code ? `(${order.coupon_code})` : 'aplicado' }}:</span>
+                            <span class="font-mono">-{{ order.formatted_discount_amount }}</span>
+                        </div>
                         <div class="flex justify-between text-gray-600">
                             <span>Costo de envío:</span>
                             <span class="font-bold text-dark font-mono">

@@ -39,6 +39,12 @@
                             <td><strong>Folio de Pedido:</strong></td>
                             <td style="text-align: right; font-family: monospace; font-size: 16px; font-weight: 800; color: #D9381E;">{{ $order->order_number }}</td>
                         </tr>
+                        @if($order->discountAmount() > 0)
+                            <tr>
+                                <td><strong>Descuento Cupón {{ $order->couponCode() ? '(' . $order->couponCode() . ')' : '' }}:</strong></td>
+                                <td style="text-align: right; font-weight: 700; color: #059669;">-${{ number_format($order->discountAmount(), 2) }} MXN</td>
+                            </tr>
+                        @endif
                         <tr>
                             <td><strong>Total Cobrado:</strong></td>
                             <td style="text-align: right; font-weight: 800; font-size: 15px; color: #111827;">${{ number_format($order->total, 2) }} MXN</td>
