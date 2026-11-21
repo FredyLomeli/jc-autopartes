@@ -17,6 +17,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    mercadolibreConnected: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const search = ref(props.filters.q || '');
@@ -68,7 +72,7 @@ const handleSyncCompleted = () => {
         subtitle="Gestión de refacciones, existencias, precios y estado de publicación"
     >
         <template #actions>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button
                     type="button"
                     @click="showSyncModal = true"
@@ -331,25 +335,29 @@ const handleSyncCompleted = () => {
                 <!-- Paginación -->
                 <div
                     v-if="products.links && products.links.length > 3"
-                    class="px-6 py-4 border-t border-border bg-surface flex flex-wrap items-center justify-between gap-2"
+                    class="px-4 sm:px-6 py-4 border-t border-border bg-surface flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                 >
+                    <span class="text-xs text-gray-600">
+                        Página <strong class="text-dark">{{ products.current_page }}</strong> de <strong class="text-dark">{{ products.last_page }}</strong>
+                    </span>
                     <div class="flex flex-wrap items-center gap-1">
                         <template v-for="(link, idx) in products.links" :key="idx">
                             <span
                                 v-if="!link.url"
                                 v-html="link.label"
-                                class="px-3 py-1.5 rounded text-xs font-semibold text-gray-400 border border-transparent"
+                                class="px-2.5 sm:px-3 py-1.5 rounded text-xs font-semibold text-gray-400 border border-transparent"
                             />
                             <Link
                                 v-else
                                 :href="link.url"
                                 v-html="link.label"
+                                preserve-scroll
                                 :class="
                                     link.active
                                         ? 'bg-primary text-white font-extrabold border-primary'
                                         : 'bg-white text-dark hover:bg-surface border-border font-semibold'
                                 "
-                                class="px-3 py-1.5 rounded text-xs border transition-colors"
+                                class="px-2.5 sm:px-3 py-1.5 rounded text-xs border transition-colors"
                             />
                         </template>
                     </div>
@@ -359,6 +367,7 @@ const handleSyncCompleted = () => {
         <!-- Modal de Sincronización Masiva por Lotes -->
         <MercadoLibreBatchSyncModal
             v-model="showSyncModal"
+            :connected="mercadolibreConnected"
             @completed="handleSyncCompleted"
         />
     </AdminLayout>

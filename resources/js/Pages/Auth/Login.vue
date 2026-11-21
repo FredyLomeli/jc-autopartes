@@ -77,7 +77,7 @@ const submit = () => {
                             required
                             autofocus
                             autocomplete="username"
-                            placeholder="admin@jcautopartes.mx"
+                            placeholder="correo@empresa.com"
                             class="w-full rounded-base border border-border bg-surface px-3.5 py-2.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
                         />
                         <InputError class="mt-1.5" :message="form.errors.email" />
@@ -127,13 +127,6 @@ const submit = () => {
                         {{ form.processing ? 'Verificando acceso...' : 'Entrar al Panel Administrativo' }}
                     </button>
                 </form>
-
-                <!-- Credenciales de prueba visibles para ambiente de demostración Fase A0 -->
-                <div class="mt-5 pt-4 border-t border-border text-xs text-gray-600 bg-surface rounded-base p-3">
-                    <span class="font-bold text-dark block mb-1">Acceso de prueba (Fase A0):</span>
-                    <span class="block font-mono">Usuario: admin@jcautopartes.mx</span>
-                    <span class="block font-mono">Contraseña: password</span>
-                </div>
             </div>
         </div>
 

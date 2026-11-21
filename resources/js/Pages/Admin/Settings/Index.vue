@@ -1,5 +1,5 @@
 <script setup>
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -19,6 +19,14 @@ const props = defineProps({
     privacyPdf: {
         type: Object,
         default: () => ({ exists: false, filename: null, url: null }),
+    },
+    mercadolibreStatus: {
+        type: Object,
+        default: () => ({
+            has_credentials: false,
+            connected: false,
+            user_id: null,
+        }),
     },
 });
 
@@ -82,6 +90,14 @@ const uploadLegalPdf = (doc) => {
 const deleteLegalPdf = (doc) => {
     if (confirm(doc.confirmDelete)) {
         router.delete(route(doc.destroyRoute), {
+            preserveScroll: true,
+        });
+    }
+};
+
+const disconnectMercadoLibre = () => {
+    if (confirm('¿Desvincular la cuenta de Mercado Libre? Dejará de sincronizar hasta volver a autorizar.')) {
+        router.delete(route('admin.mercadolibre.disconnect'), {
             preserveScroll: true,
         });
     }
@@ -517,6 +533,84 @@ const deleteLegalPdf = (doc) => {
                             {{ doc.form.processing ? 'Subiendo...' : 'Subir PDF' }}
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- INTEGRACIÓN API MERCADO LIBRE (OAUTH 2.0) -->
+            <div v-show="activeTab === 'social'" class="bg-white rounded-base border border-gray-200 p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-dark">Conexión con Mercado Libre</h2>
+                        <p class="text-xs text-gray-500">
+                            Vincula tu cuenta vendedora de Mercado Libre para importar y mantener sincronizado tu catálogo en la tienda web.
+                        </p>
+                    </div>
+                    <span
+                        :class="mercadolibreStatus.connected ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                        class="px-2.5 py-1 rounded-full text-xs font-bold self-start sm:self-auto"
+                    >
+                        {{ mercadolibreStatus.connected ? 'Cuenta Conectada' : 'Sin Vincular' }}
+                    </span>
+                </div>
+
+                <div
+                    v-if="!mercadolibreStatus.has_credentials"
+                    class="rounded-base bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900"
+                >
+                    La conexión con Mercado Libre aún no ha sido habilitada en el servidor. Contacta al administrador técnico para activarla.
+                </div>
+
+                <div
+                    v-else-if="mercadolibreStatus.connected"
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-emerald-50/50 border border-emerald-200 rounded-base p-4"
+                >
+                    <div>
+                        <span class="block text-emerald-700 font-bold uppercase text-[10px]">Cuenta Vendedora Vinculada</span>
+                        <span class="font-mono font-bold text-dark">
+                            ID {{ mercadolibreStatus.user_id }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-emerald-700 font-bold uppercase text-[10px]">Estado de Autorización</span>
+                        <span class="font-bold text-emerald-800">
+                            Activa (renovación automática)
+                        </span>
+                    </div>
+                </div>
+
+                <div
+                    v-else
+                    class="rounded-base bg-gray-50 border border-gray-200 p-4 text-xs text-gray-600"
+                >
+                    Haz clic en <strong>Conectar con Mercado Libre</strong> e inicia sesión con la cuenta vendedora donde publicas tus refacciones.
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a
+                            :href="route('admin.mercadolibre.connect')"
+                            class="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black text-xs uppercase tracking-wider rounded-base shadow-sm transition inline-flex items-center gap-2"
+                        >
+                            <span>{{ mercadolibreStatus.connected ? 'Reconectar / Cambiar Cuenta ML' : 'Conectar con Mercado Libre' }}</span>
+                            <span>&rarr;</span>
+                        </a>
+
+                        <button
+                            v-if="mercadolibreStatus.connected"
+                            type="button"
+                            @click="disconnectMercadoLibre"
+                            class="px-4 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-base transition"
+                        >
+                            Desvincular Cuenta
+                        </button>
+                    </div>
+
+                    <Link
+                        :href="route('admin.products.index')"
+                        class="text-xs font-bold text-primary hover:underline"
+                    >
+                        Ir al Sincronizador de Artículos &rarr;
+                    </Link>
                 </div>
             </div>
         </div>

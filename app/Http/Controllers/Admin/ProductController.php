@@ -6,18 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveProductRequest;
 use App\Models\Product;
 use App\Services\AdminProductService;
+use App\Services\MercadoLibre\MercadoLibreCatalogSyncService;
+use App\Services\MercadoLibre\MercadoLibreOAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-use App\Services\MercadoLibre\MercadoLibreCatalogSyncService;
-
 class ProductController extends Controller
 {
+    private readonly MercadoLibreOAuthService $meliOAuthService;
+
     public function __construct(
         private readonly AdminProductService $adminProductService,
-    ) {}
+        ?MercadoLibreOAuthService $meliOAuthService = null,
+    ) {
+        $this->meliOAuthService = $meliOAuthService ?? app(MercadoLibreOAuthService::class);
+    }
 
     public function syncFromMercadoLibre(MercadoLibreCatalogSyncService $syncService): RedirectResponse
     {
@@ -47,6 +52,7 @@ class ProductController extends Controller
             'products' => $this->adminProductService->getPaginatedProducts($filters, 12),
             'filters' => $filters,
             'options' => $this->adminProductService->getFilterAndFormOptions(),
+            'mercadolibreConnected' => $this->meliOAuthService->isConnected(),
         ]);
     }
 

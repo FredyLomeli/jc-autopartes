@@ -2,6 +2,17 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+defineProps({
+    title: {
+        type: String,
+        default: '',
+    },
+    subtitle: {
+        type: String,
+        default: '',
+    },
+});
+
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(false);
@@ -271,6 +282,25 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                         <span>{{ page.props.flash.error }}</span>
+                    </div>
+                </div>
+
+                <!-- Cabecera de Página y Acciones -->
+                <div
+                    v-if="title || subtitle || $slots.actions"
+                    class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div v-if="title || subtitle" class="min-w-0">
+                        <h1 v-if="title" class="text-xl sm:text-2xl font-extrabold text-dark tracking-tight">
+                            {{ title }}
+                        </h1>
+                        <p v-if="subtitle" class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                            {{ subtitle }}
+                        </p>
+                    </div>
+
+                    <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <slot name="actions" />
                     </div>
                 </div>
 

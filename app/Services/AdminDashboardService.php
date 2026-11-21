@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\MercadoLibre\MercadoLibreOAuthService;
 use Throwable;
 
 class AdminDashboardService
@@ -11,6 +12,7 @@ class AdminDashboardService
     public function __construct(
         private readonly StockService $stockService,
         private readonly PriceService $priceService,
+        private readonly ?MercadoLibreOAuthService $meliOAuthService = null,
     ) {}
 
     /**
@@ -67,6 +69,14 @@ class AdminDashboardService
             // Entorno offline / testing
         }
 
+        $meliConnected = false;
+        try {
+            $oauthService = $this->meliOAuthService ?? app(MercadoLibreOAuthService::class);
+            $meliConnected = $oauthService->isConnected();
+        } catch (Throwable) {
+            // Entorno offline / testing
+        }
+
         return [
             'catalogStats' => [
                 'total_products' => $totalProducts,
@@ -86,7 +96,7 @@ class AdminDashboardService
                     'label' => 'Ventas Web Pagadas',
                     'value' => $this->priceService->format($paidRevenue),
                     'subtext' => "{$paidOrdersCount} órdenes acreditadas en línea",
-                    'badge' => 'Fase C Real',
+                    'badge' => 'Tienda Web',
                 ],
                 [
                     'label' => 'Pedidos por Despachar',
@@ -102,8 +112,10 @@ class AdminDashboardService
                 ],
                 [
                     'label' => 'Sincronización Mercado Libre',
-                    'value' => 'Activa',
-                    'subtext' => 'Catálogo vinculado con inventario central',
+                    'value' => $meliConnected ? 'Conectada' : 'Sin vincular',
+                    'subtext' => $meliConnected
+                        ? 'Cuenta oficial vinculada para sincronizar catálogo'
+                        : 'Vincula tu cuenta en Configuración para importar productos',
                     'badge' => 'Canal',
                 ],
             ],

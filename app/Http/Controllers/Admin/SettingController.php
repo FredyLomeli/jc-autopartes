@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\CompanySettingService;
+use App\Services\MercadoLibre\MercadoLibreOAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,9 +17,14 @@ class SettingController extends Controller
 
     private const PRIVACY_PDF_KEY = 'privacy_policy_pdf_path';
 
+    private readonly MercadoLibreOAuthService $meliOAuthService;
+
     public function __construct(
-        protected CompanySettingService $settingService
-    ) {}
+        protected CompanySettingService $settingService,
+        ?MercadoLibreOAuthService $meliOAuthService = null,
+    ) {
+        $this->meliOAuthService = $meliOAuthService ?? app(MercadoLibreOAuthService::class);
+    }
 
     /**
      * Muestra la pantalla de administración de ajustes.
@@ -26,12 +32,18 @@ class SettingController extends Controller
     public function index(): Response
     {
         $settings = $this->settingService->getAll();
+        $meliStatus = $this->meliOAuthService->getConnectionStatus();
 
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,
             'structured' => $this->settingService->getAllStructured(),
             'warrantyPdf' => $this->buildPdfMeta($settings, self::WARRANTY_PDF_KEY, 'pages.warranty.pdf'),
             'privacyPdf' => $this->buildPdfMeta($settings, self::PRIVACY_PDF_KEY, 'pages.privacy.pdf'),
+            'mercadolibreStatus' => [
+                'has_credentials' => (bool) ($meliStatus['has_credentials'] ?? false),
+                'connected' => (bool) ($meliStatus['connected'] ?? false),
+                'user_id' => $meliStatus['user_id'] ?? null,
+            ],
         ]);
     }
 

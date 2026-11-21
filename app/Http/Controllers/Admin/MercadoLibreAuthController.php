@@ -7,6 +7,7 @@ use App\Services\MercadoLibre\MercadoLibreOAuthService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MercadoLibreAuthController extends Controller
@@ -23,7 +24,7 @@ class MercadoLibreAuthController extends Controller
         if (! $this->oauthService->hasCredentials()) {
             return redirect()
                 ->route('admin.settings.index')
-                ->with('error', 'Las credenciales MELI_APP_ID y MELI_CLIENT_SECRET deben estar configuradas en el archivo .env para conectar Mercado Libre.');
+                ->with('error', 'La integración con Mercado Libre aún no está habilitada en el servidor. Contacta al administrador técnico.');
         }
 
         $state = Str::random(40);
@@ -68,11 +69,13 @@ class MercadoLibreAuthController extends Controller
 
             return redirect()
                 ->route('admin.settings.index')
-                ->with('success', "¡Cuenta de Mercado Libre (ID: {$token->user_id}) conectada exitosamente! Ya se puede iniciar la inspección del catálogo.");
+                ->with('success', "¡Cuenta de Mercado Libre (ID: {$token->user_id}) conectada exitosamente! Ya se puede iniciar la sincronización del catálogo.");
         } catch (Exception $e) {
+            Log::error('Error en callback OAuth de Mercado Libre', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->route('admin.settings.index')
-                ->with('error', 'Fallo al intercambiar el código con Mercado Libre: ' . $e->getMessage());
+                ->with('error', 'No se pudo completar la autorización con Mercado Libre. Intenta nuevamente.');
         }
     }
 

@@ -38,7 +38,7 @@ class MercadoLibreProductMapperTest extends TestCase
         $this->assertEquals('Versa', $attrs['vehicle_model']);
         $this->assertEquals(2015, $attrs['year_start']);
         $this->assertEquals(2019, $attrs['year_end']);
-        $this->assertEquals('used', $attrs['condition']);
+        $this->assertEquals('A', $attrs['condition']);
         $this->assertEquals('published', $attrs['status']);
         $this->assertEquals(85.0, $attrs['height_cm']);
         $this->assertEquals(65.0, $attrs['width_cm']);
@@ -59,7 +59,7 @@ class MercadoLibreProductMapperTest extends TestCase
         $attrs = $result['attributes'];
 
         $this->assertEquals('MLM3001004', $attrs['mercadolibre_id']);
-        $this->assertEquals('Colisión y Carrocería', $attrs['category']);
+        $this->assertEquals('Colision', $attrs['category']);
         $this->assertEquals('Derecho / Pasajero', $attrs['side']);
         $this->assertEquals('Delantero', $attrs['position']);
         $this->assertEquals('26010-5RB0A', $attrs['part_number']);

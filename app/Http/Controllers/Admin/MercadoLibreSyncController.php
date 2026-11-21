@@ -7,6 +7,7 @@ use App\Services\MercadoLibre\MercadoLibreCatalogSyncService;
 use App\Services\MercadoLibre\MercadoLibreOAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
@@ -70,9 +71,11 @@ class MercadoLibreSyncController extends Controller
                 'errors' => $result['errors'],
             ]);
         } catch (Throwable $e) {
+            Log::error('Error en sincronización por lotes de Mercado Libre', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Ocurrió un problema al procesar el lote con Mercado Libre. Revisa la conexión e intenta nuevamente.',
                 'error_type' => 'SYNC_BATCH_EXCEPTION',
                 'has_more' => false,
             ], 500);

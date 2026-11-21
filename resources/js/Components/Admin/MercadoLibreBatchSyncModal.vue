@@ -169,7 +169,7 @@ const processBatch = async () => {
         }
 
         // ¿Quedan más piezas o ya terminamos?
-        if (data.has_more && totalProcessed.value < totalRemote.value) {
+        if (data.has_more) {
             // Siguiente lote sin congelar el navegador
             setTimeout(() => {
                 processBatch();
@@ -238,7 +238,7 @@ onUnmounted(() => {
                             Sincronizador Masivo de Catálogo
                         </h3>
                         <p class="text-xs text-gray-500">
-                            Descarga por lotes progresivos optimizada para hosting DirectAdmin
+                            Importación progresiva por lotes desde tu cuenta de Mercado Libre
                         </p>
                     </div>
                 </div>
@@ -271,7 +271,7 @@ onUnmounted(() => {
 
                     <div class="flex justify-between items-center text-[11px] text-gray-500 font-medium">
                         <span>
-                            Procesadas: <strong class="text-dark font-mono">{{ totalProcessed.toLocaleString() }}</strong> / {{ totalRemote.toLocaleString() || '12,000+' }} refacciones
+                            Procesadas: <strong class="text-dark font-mono">{{ totalProcessed.toLocaleString() }}</strong> / {{ totalRemote > 0 ? totalRemote.toLocaleString() : 'por determinar' }} refacciones
                         </span>
                         <span v-if="isRunning || isPaused">
                             Restante: <strong class="text-dark">{{ estimatedRemainingTime }}</strong> ({{ formattedElapsedTime }})
@@ -299,31 +299,35 @@ onUnmounted(() => {
                     </div>
                 </div>
 
+                <!-- Aviso si aún no hay cuenta OAuth conectada -->
+                <div
+                    v-if="!connected && !useFixture"
+                    class="rounded-base bg-amber-50 border border-amber-300 p-3.5 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
+                    <span>
+                        <strong>Cuenta de Mercado Libre sin vincular:</strong> Conéctala primero en Ajustes (pestaña Redes y Mercado Libre) para sincronizar publicaciones reales.
+                    </span>
+                    <a
+                        :href="route('admin.settings.index')"
+                        class="font-extrabold text-primary hover:underline shrink-0"
+                    >
+                        Ir a Ajustes &rarr;
+                    </a>
+                </div>
+
                 <!-- Opciones previas al inicio -->
                 <div v-if="!isRunning && !isPaused && !isFinished" class="bg-surface/60 rounded-base border border-border p-4 space-y-3">
                     <h4 class="text-xs font-extrabold uppercase tracking-wider text-gray-500">Configuración del Lote</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div>
-                            <label class="block font-bold text-dark mb-1">Tamaño por paquete</label>
-                            <select
-                                v-model.number="limit"
-                                class="w-full text-xs rounded border-border bg-white py-1.5 focus:border-primary focus:ring-primary"
-                            >
-                                <option :value="25">25 refacciones (Hosting muy ligero)</option>
-                                <option :value="50">50 refacciones (Recomendado para DirectAdmin)</option>
-                                <option :value="100">100 refacciones (Más rápido)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-dark mb-1">Fuente de datos</label>
-                            <select
-                                v-model="useFixture"
-                                class="w-full text-xs rounded border-border bg-white py-1.5 focus:border-primary focus:ring-primary"
-                            >
-                                <option :value="false">API oficial en vivo de Mercado Libre</option>
-                                <option :value="true">Modo Simulación / Fixture local</option>
-                            </select>
-                        </div>
+                    <div class="text-xs">
+                        <label class="block font-bold text-dark mb-1">Tamaño por paquete</label>
+                        <select
+                            v-model.number="limit"
+                            class="w-full text-xs rounded border-border bg-white py-1.5 focus:border-primary focus:ring-primary"
+                        >
+                            <option :value="25">25 refacciones (Lote ligero)</option>
+                            <option :value="50">50 refacciones (Recomendado)</option>
+                            <option :value="100">100 refacciones (Lote rápido)</option>
+                        </select>
                     </div>
                 </div>
 
