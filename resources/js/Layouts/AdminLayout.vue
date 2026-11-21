@@ -89,7 +89,7 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
 </script>
 
 <template>
-    <div class="h-screen w-full bg-surface text-dark flex overflow-hidden">
+    <div class="h-[100dvh] lg:h-screen w-full bg-surface text-dark flex overflow-hidden">
         <!-- Overlay Móvil -->
         <div
             v-if="sidebarOpen"
@@ -100,11 +100,10 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
         <!-- Menú Lateral en Carbón (#111111) -->
         <aside
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-            class="fixed inset-y-0 left-0 z-40 w-64 h-screen flex-shrink-0 bg-dark text-white flex flex-col justify-between transition-transform duration-200 lg:static lg:w-64 lg:h-screen lg:flex-shrink-0 border-r border-white/10 overflow-y-auto overflow-x-hidden"
+            class="fixed inset-y-0 left-0 z-40 w-64 h-[100dvh] flex-shrink-0 bg-dark text-white flex flex-col transition-transform duration-200 lg:static lg:w-64 lg:h-screen lg:flex-shrink-0 border-r border-white/10 overflow-hidden"
         >
-            <div>
-                <!-- Logo y Cabecera Lateral -->
-                <div class="h-16 px-5 flex items-center justify-between border-b border-white/10 overflow-hidden">
+            <!-- Logo y Cabecera Lateral -->
+            <div class="h-16 px-5 flex items-center justify-between border-b border-white/10 flex-shrink-0 overflow-hidden">
                     <Link :href="route('admin.dashboard')" class="flex items-center gap-3 min-w-0">
                         <img
                             src="/imagenes/brand/logo.jpg"
@@ -135,7 +134,7 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
                 </div>
 
                 <!-- Navegación Lateral -->
-                <nav class="p-4 space-y-1.5" aria-label="Menú de administración">
+                <nav class="flex-1 min-h-0 overflow-y-auto p-4 space-y-1.5" aria-label="Menú de administración">
                     <!-- Ítems Principales -->
                     <Link
                         v-for="item in mainNavItems"
@@ -199,10 +198,9 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
                         </div>
                     </div>
                 </nav>
-            </div>
 
             <!-- Pie del Menú Lateral: Tienda Pública y Usuario -->
-            <div class="p-4 border-t border-white/10 space-y-3">
+            <div class="p-4 border-t border-white/10 space-y-3 flex-shrink-0 bg-dark">
                 <a
                     href="/"
                     target="_blank"
@@ -222,9 +220,12 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="w-full text-left px-3 py-2 rounded-base text-xs text-rose-300 hover:bg-rose-500/10 hover:text-rose-200 transition-colors font-semibold"
+                    class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-base border border-rose-500/30 bg-rose-500/10 text-xs text-rose-200 hover:bg-rose-500/20 hover:text-white transition-colors font-bold"
                 >
-                    Cerrar Sesión
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Cerrar Sesión</span>
                 </Link>
             </div>
         </aside>
@@ -232,28 +233,40 @@ const settingsOpen = ref(true); // Abierto por defecto o interactivo
         <!-- Contenedor Principal -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Barra Superior en Fondo Claro (#F7F7F7) -->
-            <header class="h-16 bg-surface border-b border-gray-200 px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
-                <div class="flex items-center gap-3">
+            <header class="h-16 bg-surface border-b border-gray-200 px-4 sm:px-6 flex items-center justify-between gap-2 flex-shrink-0">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
                     <button
                         type="button"
                         @click="sidebarOpen = true"
-                        class="lg:hidden p-2 text-dark hover:bg-gray-200 rounded-base"
+                        class="lg:hidden p-2 text-dark hover:bg-gray-200 rounded-base flex-shrink-0"
                         aria-label="Abrir menú"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <div class="text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                        Sistema de Gestión JC Autopartes
+                    <div class="text-[11px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wider truncate">
+                        JC Autopartes Admin
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         En Línea
                     </span>
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-base border border-rose-200 bg-white hover:bg-rose-50 text-xs font-bold text-rose-700 transition-colors"
+                        title="Cerrar sesión"
+                    >
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span>Salir</span>
+                    </Link>
                 </div>
             </header>
 
