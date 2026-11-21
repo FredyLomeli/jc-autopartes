@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -11,6 +11,14 @@ const props = defineProps({
     structured: {
         type: Object,
         default: () => ({}),
+    },
+    warrantyPdf: {
+        type: Object,
+        default: () => ({ exists: false, filename: null, url: null }),
+    },
+    privacyPdf: {
+        type: Object,
+        default: () => ({ exists: false, filename: null, url: null }),
     },
 });
 
@@ -24,6 +32,59 @@ const submit = () => {
     form.put(route('admin.settings.update'), {
         preserveScroll: true,
     });
+};
+
+const legalDocs = [
+    {
+        key: 'warranty',
+        title: 'Política de Garantía en PDF',
+        description: 'Documento oficial mostrado como métrica general en /garantia.',
+        inputName: 'warranty_pdf',
+        uploadRoute: 'admin.settings.warranty-pdf.upload',
+        destroyRoute: 'admin.settings.warranty-pdf.destroy',
+        confirmDelete: '¿Eliminar el PDF de la Política de Garantía?',
+        form: useForm({ warranty_pdf: null }),
+    },
+    {
+        key: 'privacy',
+        title: 'Aviso de Privacidad en PDF',
+        description: 'Documento oficial mostrado embebido en /aviso-de-privacidad.',
+        inputName: 'privacy_pdf',
+        uploadRoute: 'admin.settings.privacy-pdf.upload',
+        destroyRoute: 'admin.settings.privacy-pdf.destroy',
+        confirmDelete: '¿Eliminar el PDF del Aviso de Privacidad? El sitio público volverá a mostrar solo el texto legal.',
+        form: useForm({ privacy_pdf: null }),
+    },
+];
+
+const pdfInputRefs = ref({});
+
+const getPdfMeta = (key) => (key === 'warranty' ? props.warrantyPdf : props.privacyPdf);
+
+const onLegalPdfSelected = (doc, event) => {
+    doc.form[doc.inputName] = event.target.files[0] || null;
+};
+
+const uploadLegalPdf = (doc) => {
+    doc.form.post(route(doc.uploadRoute), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            doc.form.reset();
+            const el = pdfInputRefs.value[doc.key];
+            if (el) {
+                el.value = '';
+            }
+        },
+    });
+};
+
+const deleteLegalPdf = (doc) => {
+    if (confirm(doc.confirmDelete)) {
+        router.delete(route(doc.destroyRoute), {
+            preserveScroll: true,
+        });
+    }
 };
 </script>
 
@@ -372,6 +433,92 @@ const submit = () => {
                     </button>
                 </div>
             </form>
+
+            <!-- DOCUMENTOS LEGALES EN PDF (GARANTÍA Y PRIVACIDAD) -->
+            <div v-show="activeTab === 'general'" class="space-y-4">
+                <div
+                    v-for="doc in legalDocs"
+                    :key="doc.key"
+                    class="bg-white rounded-base border border-gray-200 p-6 shadow-sm space-y-4"
+                >
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-dark">{{ doc.title }}</h2>
+                            <p class="text-xs text-gray-500">
+                                {{ doc.description }} Formato <code class="font-mono">.pdf</code> (máximo 10 MB).
+                            </p>
+                        </div>
+                        <span
+                            :class="getPdfMeta(doc.key).exists ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'"
+                            class="px-2.5 py-1 rounded-full text-xs font-bold self-start sm:self-auto"
+                        >
+                            {{ getPdfMeta(doc.key).exists ? 'PDF Publicado' : 'Sin PDF cargado' }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="doc.form.recentlySuccessful"
+                        class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-base text-xs font-semibold"
+                    >
+                        El archivo PDF se actualizó y publicó correctamente.
+                    </div>
+
+                    <div
+                        v-if="getPdfMeta(doc.key).exists"
+                        class="p-4 bg-gray-50 border border-gray-200 rounded-base flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                        <div class="text-xs space-y-0.5">
+                            <span class="block font-bold text-dark">Archivo activo en el sitio público:</span>
+                            <span class="font-mono text-gray-600">{{ getPdfMeta(doc.key).filename }}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <a
+                                :href="getPdfMeta(doc.key).url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="px-3.5 py-2 rounded-base border border-gray-300 bg-white hover:bg-gray-100 text-xs font-bold text-dark transition"
+                            >
+                                Ver PDF &rarr;
+                            </a>
+                            <button
+                                type="button"
+                                @click="deleteLegalPdf(doc)"
+                                class="px-3.5 py-2 rounded-base border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 transition"
+                            >
+                                Eliminar PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="uploadLegalPdf(doc)" class="flex flex-col sm:flex-row sm:items-end gap-3 pt-1">
+                        <div class="flex-1">
+                            <label :for="`legal-pdf-${doc.key}`" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                {{ getPdfMeta(doc.key).exists ? 'Reemplazar archivo PDF' : 'Seleccionar archivo PDF' }}
+                            </label>
+                            <input
+                                :id="`legal-pdf-${doc.key}`"
+                                :ref="(el) => { if (el) pdfInputRefs[doc.key] = el }"
+                                type="file"
+                                accept="application/pdf,.pdf"
+                                @change="onLegalPdfSelected(doc, $event)"
+                                class="block w-full text-xs text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-base file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-dark hover:file:bg-gray-200 border border-gray-300 rounded-base bg-white"
+                                required
+                            />
+                            <p v-if="doc.form.errors[doc.inputName]" class="text-xs text-red-600 font-semibold mt-1">
+                                {{ doc.form.errors[doc.inputName] }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="submit"
+                            :disabled="doc.form.processing || !doc.form[doc.inputName]"
+                            class="px-5 py-2.5 bg-dark hover:bg-gray-800 text-white font-bold text-xs uppercase tracking-wider rounded-base transition disabled:opacity-50 shrink-0"
+                        >
+                            {{ doc.form.processing ? 'Subiendo...' : 'Subir PDF' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </AdminLayout>
 </template>

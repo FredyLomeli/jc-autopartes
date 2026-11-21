@@ -206,5 +206,25 @@ class SiteSettingsSeeder extends Seeder
                 $setting
             );
         }
+
+        SiteSetting::firstOrCreate(
+            ['key' => 'warranty_policy_pdf_path'],
+            [
+                'value' => '',
+                'group' => 'general',
+                'type' => 'file',
+                'label' => 'Archivo PDF de Política de Garantía',
+            ]
+        );
+
+        SiteSetting::firstOrCreate(
+            ['key' => 'privacy_policy_pdf_path'],
+            [
+                'value' => '',
+                'group' => 'general',
+                'type' => 'file',
+                'label' => 'Archivo PDF del Aviso de Privacidad',
+            ]
+        );
     }
 }

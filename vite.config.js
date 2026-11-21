@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/public.js',
+                'resources/js/pdf-viewer.js',
             ],
             refresh: true,
         }),
@@ -21,4 +22,17 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                assetFileNames: (assetInfo) => {
+                    if (assetInfo.names?.some((name) => name.endsWith('.mjs')) || assetInfo.name?.endsWith('.mjs')) {
+                        return 'assets/[name]-[hash].js';
+                    }
+
+                    return 'assets/[name]-[hash][extname]';
+                },
+            },
+        },
+    },
 });

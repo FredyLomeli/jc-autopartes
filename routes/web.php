@@ -34,6 +34,7 @@ Route::patch('/carrito/{product}', [CartController::class, 'update'])->whereNumb
 Route::delete('/carrito/{product}', [CartController::class, 'remove'])->whereNumber('product')->name('cart.remove');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/cotizar-envio', [CheckoutController::class, 'quoteShipping'])->name('checkout.quote-shipping');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/exito', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/checkout/fallo', [CheckoutController::class, 'failure'])->name('checkout.failure');
@@ -43,7 +44,9 @@ Route::get('/checkout/pendiente', [CheckoutController::class, 'pending'])->name(
 Route::get('/contacto', [PageController::class, 'contact'])->name('pages.contact');
 Route::get('/preguntas-frecuentes', [PageController::class, 'faqs'])->name('pages.faqs');
 Route::get('/garantia', [PageController::class, 'warranty'])->name('pages.warranty');
+Route::get('/garantia/documento.pdf', [PageController::class, 'warrantyPdf'])->name('pages.warranty.pdf');
 Route::get('/aviso-de-privacidad', [PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/aviso-de-privacidad/documento.pdf', [PageController::class, 'privacyPdf'])->name('pages.privacy.pdf');
 Route::get('/terminos-y-condiciones', [PageController::class, 'terms'])->name('pages.terms');
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
@@ -97,6 +100,10 @@ Route::prefix('admin')
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
         Route::get('/ajustes', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/ajustes', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/ajustes/garantia-pdf', [SettingController::class, 'uploadWarrantyPdf'])->name('settings.warranty-pdf.upload');
+        Route::delete('/ajustes/garantia-pdf', [SettingController::class, 'destroyWarrantyPdf'])->name('settings.warranty-pdf.destroy');
+        Route::post('/ajustes/privacidad-pdf', [SettingController::class, 'uploadPrivacyPdf'])->name('settings.privacy-pdf.upload');
+        Route::delete('/ajustes/privacidad-pdf', [SettingController::class, 'destroyPrivacyPdf'])->name('settings.privacy-pdf.destroy');
         Route::get('/configuracion', [SettingController::class, 'index'])->name('settings.legacy');
 
         // Integración con Mercado Libre (/admin/integraciones/mercadolibre)

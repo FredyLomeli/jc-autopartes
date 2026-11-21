@@ -24,8 +24,14 @@
 
     $whatsappOrderLines = collect($items)->map(fn ($i) => "• {$i['quantity']}x {$i['title']} (SKU: {$i['sku']}) - {$i['formatted_line_subtotal']}")->implode("\n");
     $whatsappCheckoutText = "Hola JC Autopartes, quiero consultar o solicitar factura de mi pedido web:\n{$whatsappOrderLines}\nTotal: {$totalFormatted}";
-    $initialDeliveryChoice = old('delivery_method') === 'pickup' ? 'pickup' : 'domicilio';
+    $initialDeliveryChoice = match (old('delivery_variant')) {
+        'pickup' => 'pickup',
+        'ocurre' => 'ocurre',
+        'domicilio' => 'domicilio',
+        default => old('delivery_method') === 'pickup' ? 'pickup' : 'domicilio',
+    };
     $initialStep = $errors->any() ? 2 : 1;
+    $merchandiseTotal = round((float) ($cart['total'] ?? $cart['subtotal'] ?? 0.0), 2);
 @endphp
 
 @section('content')
@@ -53,6 +59,12 @@
             step: {{ $initialStep }},
             showSummary: {{ !empty($cart['coupon']) ? 'true' : 'false' }},
             deliveryChoice: @js($initialDeliveryChoice),
+            merchandiseTotal: {{ $merchandiseTotal }},
+            shippingQuote: @js($initialQuote ?? null),
+            quoteLoading: false,
+            quoteError: '',
+            quoteUrl: @js(route('checkout.quote-shipping')),
+            csrfToken: @js(csrf_token()),
             customerName: @js(old('customer_name', '')),
             customerPhone: @js(old('customer_phone', '')),
             customerEmail: @js(old('customer_email', '')),
@@ -67,10 +79,33 @@
             selectDelivery(choice) {
                 this.deliveryChoice = choice;
                 this.formError = '';
+                this.quoteError = '';
                 if (choice === 'ocurre' && this.shippingNeighborhood.trim() === '') {
                     this.shippingNeighborhood = 'Servicio Ocurre';
                 } else if (choice === 'domicilio' && this.shippingNeighborhood === 'Servicio Ocurre') {
                     this.shippingNeighborhood = '';
+                }
+
+                if (choice === 'pickup') {
+                    this.shippingQuote = {
+                        valid: true,
+                        postal_code: '47600',
+                        delivery_variant: 'pickup',
+                        carrier: 'Matriz JC Autopartes (Mostrador)',
+                        zone_label: 'Tepatitlán de Morelos, Jalisco',
+                        cost: 0,
+                        formatted_cost: '$0.00 MXN',
+                        estimated_days: 'Entrega en mostrador el mismo día hábil',
+                        is_simulated: true,
+                        notice: 'Recolección directa en tienda sin costo de paquetería.'
+                    };
+                    return;
+                }
+
+                if (/^[0-9]{5}$/.test(this.postalCode.trim())) {
+                    this.fetchShippingQuote();
+                } else {
+                    this.shippingQuote = null;
                 }
             },
 
@@ -78,6 +113,93 @@
                 if (this.deliveryChoice === 'pickup') return 'Recoger en Mostrador (Tepatitlán)';
                 if (this.deliveryChoice === 'ocurre') return 'Servicio Ocurre en Paquetería';
                 return 'Envío a Domicilio';
+            },
+
+            hasValidQuote() {
+                if (this.deliveryChoice === 'pickup') return true;
+                return Boolean(
+                    this.shippingQuote &&
+                    this.shippingQuote.valid &&
+                    this.shippingQuote.postal_code === this.postalCode.trim() &&
+                    this.shippingQuote.delivery_variant === this.deliveryChoice
+                );
+            },
+
+            shippingCost() {
+                if (this.deliveryChoice === 'pickup') return 0;
+                return this.hasValidQuote() ? Number(this.shippingQuote.cost || 0) : 0;
+            },
+
+            formatMxn(amount) {
+                return '$' + Number(amount || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ' MXN';
+            },
+
+            formattedGrandTotal() {
+                return this.formatMxn(this.merchandiseTotal + this.shippingCost());
+            },
+
+            async fetchShippingQuote() {
+                if (this.deliveryChoice === 'pickup') {
+                    this.quoteError = '';
+                    return true;
+                }
+
+                const cleanCp = this.postalCode.replace(/\D/g, '').slice(0, 5);
+                this.postalCode = cleanCp;
+
+                if (!/^[0-9]{5}$/.test(cleanCp)) {
+                    this.shippingQuote = null;
+                    this.quoteError = 'Ingresa un Código Postal válido de 5 dígitos para validar cobertura y calcular el envío.';
+                    return false;
+                }
+
+                this.quoteLoading = true;
+                this.quoteError = '';
+
+                try {
+                    const response = await fetch(this.quoteUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                        },
+                        body: JSON.stringify({
+                            postal_code: cleanCp,
+                            delivery_variant: this.deliveryChoice,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.ok) {
+                        this.shippingQuote = null;
+                        this.quoteError = data.message || (data.errors && data.errors.postal_code ? data.errors.postal_code[0] : 'No se pudo cotizar el Código Postal.');
+                        return false;
+                    }
+
+                    this.shippingQuote = data.quote;
+                    return true;
+                } catch (e) {
+                    this.quoteError = 'Error de conexión al validar el Código Postal. Intenta nuevamente.';
+                    return false;
+                } finally {
+                    this.quoteLoading = false;
+                }
+            },
+
+            async continueFromStep1() {
+                if (this.deliveryChoice !== 'pickup' && !this.hasValidQuote()) {
+                    const ok = await this.fetchShippingQuote();
+                    if (!ok) {
+                        return;
+                    }
+                }
+                this.step = 2;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
 
             validateStep2() {
@@ -117,12 +239,21 @@
                 return true;
             },
 
-            goToStep(target) {
+            async goToStep(target) {
                 this.formError = '';
-                if (target === 3 && !this.validateStep2()) {
-                    this.step = 2;
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (target === 2) {
+                    await this.continueFromStep1();
                     return;
+                }
+                if (target === 3) {
+                    if (this.deliveryChoice !== 'pickup' && !this.hasValidQuote()) {
+                        await this.fetchShippingQuote();
+                    }
+                    if (!this.validateStep2()) {
+                        this.step = 2;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
                 }
                 this.step = target;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -139,6 +270,15 @@
         class="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6"
     >
         <!-- Mensajes de Error / Éxito de Sesión -->
+        @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-base p-4 text-sm flex items-start gap-3">
+                <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <div>{{ session('success') }}</div>
+            </div>
+        @endif
+
         @if(session('error'))
             <div class="bg-red-50 border border-red-200 text-red-800 rounded-base p-4 text-sm flex items-start gap-3">
                 <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +309,7 @@
                         </svg>
                     </span>
                 </div>
-                <span class="text-base sm:text-lg font-black text-dark whitespace-nowrap">
+                <span class="text-base sm:text-lg font-black text-dark whitespace-nowrap" x-text="formattedGrandTotal()">
                     {{ $totalFormatted }}
                 </span>
             </button>
@@ -280,6 +420,7 @@
         <form action="{{ route('checkout.store') }}" method="POST" @submit="handleSubmit($event)">
             @csrf
             <input type="hidden" name="delivery_method" :value="deliveryChoice === 'pickup' ? 'pickup' : 'shipping'">
+            <input type="hidden" name="delivery_variant" :value="deliveryChoice">
 
             <!-- ================= PASO 1: MÉTODO DE ENTREGA (SOLO TARJETAS) ================= -->
             <section x-show="step === 1" x-transition.opacity class="bg-white rounded-card border border-border p-6 sm:p-8 shadow-sm space-y-6">
@@ -363,11 +504,69 @@
                     </button>
                 </div>
 
+                <!-- Cotizador de Envío por Código Postal (Domicilio / Ocurre) -->
+                <div x-cloak x-show="deliveryChoice !== 'pickup'" class="bg-surface rounded-card border border-border p-4 sm:p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div class="flex-1">
+                            <label for="step1-postal-code" class="block text-xs font-black uppercase tracking-wider text-dark mb-1">
+                                Código Postal destino (5 dígitos) *
+                            </label>
+                            <p class="text-xs text-gray-500 mb-2">
+                                Valida tu zona y conoce el costo estimado de Paquetexpress antes de continuar.
+                            </p>
+                            <div class="flex flex-col sm:flex-row gap-2.5">
+                                <input
+                                    id="step1-postal-code"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="5"
+                                    x-model="postalCode"
+                                    @keydown.enter.prevent="fetchShippingQuote()"
+                                    placeholder="Ej. 47600 o 44100"
+                                    class="sm:w-48 rounded-base border border-border bg-white px-3.5 py-2.5 text-sm font-bold text-dark tracking-wider focus:border-primary focus:ring-1 focus:ring-primary"
+                                >
+                                <button
+                                    type="button"
+                                    @click="fetchShippingQuote()"
+                                    :disabled="quoteLoading"
+                                    class="bg-dark hover:bg-gray-800 disabled:opacity-60 text-white font-bold px-5 py-2.5 rounded-base text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap"
+                                >
+                                    <span x-show="!quoteLoading">Validar C.P. y Cotizar</span>
+                                    <span x-show="quoteLoading">Cotizando...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-cloak x-show="quoteError" class="bg-red-50 border border-red-200 text-red-800 rounded-base p-3 text-xs font-semibold">
+                        <span x-text="quoteError"></span>
+                    </div>
+
+                    <div x-cloak x-show="hasValidQuote()" class="bg-white border border-emerald-200 rounded-base p-4 space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase">
+                                    Ejemplo Paquetexpress
+                                </span>
+                                <span class="text-xs font-bold text-dark" x-text="shippingQuote?.zone_label"></span>
+                            </div>
+                            <span class="text-base font-black text-primary" x-text="shippingQuote?.formatted_cost"></span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+                            <span>Modalidad: <strong class="text-dark" x-text="deliveryLabel()"></strong></span>
+                            <span>Entrega estimada: <strong class="text-dark" x-text="shippingQuote?.estimated_days"></strong></span>
+                            <span x-show="shippingQuote?.billable_weight_kg">Peso cobrable: <strong class="text-dark" x-text="(shippingQuote?.billable_weight_kg || '') + ' kg'"></strong></span>
+                        </div>
+                        <p class="text-[11px] text-gray-500" x-text="shippingQuote?.notice"></p>
+                    </div>
+                </div>
+
                 <div class="pt-4 border-t border-border flex justify-end">
                     <button
                         type="button"
-                        @click="goToStep(2)"
-                        class="w-full sm:w-auto bg-primary hover:bg-primary-hover text-white font-extrabold py-3 px-8 rounded-base text-sm uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
+                        @click="continueFromStep1()"
+                        :disabled="quoteLoading"
+                        class="w-full sm:w-auto bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-extrabold py-3 px-8 rounded-base text-sm uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
                     >
                         Continuar a Datos &rarr;
                     </button>
@@ -389,6 +588,17 @@
                 </div>
 
                 <!-- Alerta de Validación Cliente / Servidor -->
+                @if($errors->any())
+                    <div class="bg-red-50 border border-red-200 text-red-800 rounded-base p-3.5 text-xs space-y-1">
+                        <strong class="block font-bold">Revisa los campos marcados antes de continuar:</strong>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div x-cloak x-show="formError" class="bg-red-50 border border-red-200 text-red-800 rounded-base p-3.5 text-xs font-semibold">
                     <span x-text="formError"></span>
                 </div>
@@ -462,6 +672,7 @@
                                 name="shipping_postal_code"
                                 maxlength="5"
                                 x-model="postalCode"
+                                @input="if (postalCode.replace(/\D/g, '').length === 5) fetchShippingQuote()"
                                 placeholder="Ej. 47600"
                                 class="w-full rounded-base border @error('shipping_postal_code') border-red-500 @else border-border @enderror bg-surface px-3.5 py-2.5 text-sm font-bold text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
                             >
@@ -620,13 +831,13 @@
                     @endif
 
                     <div class="flex justify-between text-gray-600">
-                        <span>Entrega</span>
-                        <span class="font-semibold text-dark" x-text="deliveryChoice === 'pickup' ? 'Recoger en tienda ($0.00)' : 'Envío / Ocurre por paquetería'"></span>
+                        <span>Entrega (<span x-text="deliveryLabel()"></span>)</span>
+                        <span class="font-semibold text-dark" x-text="deliveryChoice === 'pickup' ? '$0.00 MXN (Mostrador)' : (hasValidQuote() ? shippingQuote.formatted_cost : 'Por cotizar con C.P.')"></span>
                     </div>
 
                     <div class="flex justify-between items-baseline pt-3 border-t border-border">
                         <span class="text-base font-black text-dark uppercase">Total a Pagar</span>
-                        <span class="text-2xl font-black text-primary">{{ $totalFormatted }}</span>
+                        <span class="text-2xl font-black text-primary" x-text="formattedGrandTotal()">{{ $totalFormatted }}</span>
                     </div>
                 </div>
 
@@ -657,7 +868,7 @@
                         type="submit"
                         class="w-full sm:flex-1 bg-[#009EE3] hover:bg-[#0081BA] text-white font-black py-3.5 px-8 rounded-base text-sm uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                     >
-                        <span>Pagar {{ $totalFormatted }} con Mercado Pago</span>
+                        <span>Pagar <span x-text="formattedGrandTotal()">{{ $totalFormatted }}</span> con Mercado Pago</span>
                         <span>&rarr;</span>
                     </button>
                 </div>

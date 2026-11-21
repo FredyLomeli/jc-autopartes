@@ -6,27 +6,66 @@
 
 @php
     $business = config('business');
+    $settings = $companySettings ?? [];
+    $companyName = $settings['company_name'] ?? $business['name'];
+    $companyEmail = $settings['contact_email'] ?? $business['email'];
+    $companyAddress = isset($settings['contact_address'])
+        ? trim("{$settings['contact_address']}, Col. " . ($settings['contact_colony'] ?? 'Los Adobes') . ', C.P. ' . ($settings['contact_zip'] ?? '47656') . ', ' . ($settings['contact_city'] ?? 'Tepatitlán de Morelos, Jalisco'))
+        : $business['address'];
+    $hasPdf = !empty($hasPrivacyPdf);
 @endphp
 
 @section('content')
     <div class="bg-white border-b border-border">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Protección de Datos Personales
-            </span>
-            <h1 class="text-2xl sm:text-4xl font-extrabold text-dark mt-2 tracking-tight">
-                Aviso de Privacidad Integral
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-500 mt-2">
-                En cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento.
-            </p>
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Protección de Datos Personales
+                    </span>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold text-dark mt-2 tracking-tight">
+                        Aviso de Privacidad Integral
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-2">
+                        En cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento.
+                    </p>
+                </div>
+
+                @if($hasPdf)
+                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                        <a
+                            href="{{ route('pages.privacy.pdf') }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-base border border-border bg-surface hover:border-dark text-xs font-bold text-dark transition-colors"
+                        >
+                            Abrir PDF
+                        </a>
+                        <a
+                            href="{{ route('pages.privacy.pdf') }}"
+                            download="Aviso-de-Privacidad-JC-Autopartes.pdf"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-base bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors shadow-xs"
+                        >
+                            Descargar PDF
+                        </a>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        @if($hasPdf)
+            @include('public.partials.pdf-viewer', [
+                'pdfUrl' => route('pages.privacy.pdf'),
+                'viewerTitle' => 'Documento Oficial de Políticas y Aviso de Privacidad (PDF)',
+                'viewerSubtitle' => "Visualiza o descarga el documento vigente publicado por {$companyName}.",
+                'downloadFilename' => 'Aviso-de-Privacidad-JC-Autopartes.pdf',
+            ])
+        @endif
 
         <div class="bg-white rounded-card border border-border p-6 sm:p-8 shadow-sm space-y-8 text-sm text-gray-700 leading-relaxed">
 
@@ -37,7 +76,7 @@
                     Identidad y Domicilio del Responsable
                 </h2>
                 <p>
-                    <strong>{{ $business['name'] }}</strong>, con domicilio comercial ubicado en {{ $business['address'] }}, es el responsable del uso, protección y tratamiento de los datos personales proporcionados por sus clientes y usuarios a través de este portal web, líneas de atención telefónica, mensajería WhatsApp y mostrador físico.
+                    <strong>{{ $companyName }}</strong>, con domicilio comercial ubicado en {{ $companyAddress }}, es el responsable del uso, protección y tratamiento de los datos personales proporcionados por sus clientes y usuarios a través de este portal web, líneas de atención telefónica, mensajería WhatsApp y mostrador físico.
                 </p>
             </section>
 
@@ -112,7 +151,7 @@
                     Usted tiene derecho en cualquier momento a ejercer sus derechos de <strong>Acceso, Rectificación, Cancelación u Oposición (ARCO)</strong>, así como a revocar el consentimiento que haya otorgado para el tratamiento de sus datos personales.
                 </p>
                 <p>
-                    Para dar inicio a su solicitud, deberá enviar un correo electrónico con el asunto <em class="font-medium">"Solicitud de Derechos ARCO - JC Autopartes"</em> a la cuenta oficial <a href="mailto:{{ $business['email'] }}" class="text-primary font-semibold hover:underline">{{ $business['email'] }}</a>, o presentarse en nuestras oficinas en {{ $business['address'] }}, acompañando:
+                    Para dar inicio a su solicitud, deberá enviar un correo electrónico con el asunto <em class="font-medium">"Solicitud de Derechos ARCO - JC Autopartes"</em> a la cuenta oficial <a href="mailto:{{ $companyEmail }}" class="text-primary font-semibold hover:underline">{{ $companyEmail }}</a>, o presentarse en nuestras oficinas en {{ $companyAddress }}, acompañando:
                 </p>
                 <ol class="list-decimal list-inside space-y-1 text-xs sm:text-sm pl-2">
                     <li>Copia simple de su identificación oficial vigente (INE o Pasaporte).</li>

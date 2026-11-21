@@ -22,6 +22,7 @@ class StoreOrderRequest extends FormRequest
             'customer_phone' => ['required', 'string', 'min:10', 'max:20'],
             'customer_email' => ['required', 'email', 'max:150'],
             'delivery_method' => ['required', 'string', 'in:' . Order::DELIVERY_SHIPPING . ',' . Order::DELIVERY_PICKUP],
+            'delivery_variant' => ['nullable', 'string', 'in:domicilio,ocurre,pickup'],
             'shipping_postal_code' => ['required_if:delivery_method,' . Order::DELIVERY_SHIPPING, 'nullable', 'regex:/^[0-9]{5}$/'],
             'shipping_address' => ['required_if:delivery_method,' . Order::DELIVERY_SHIPPING, 'nullable', 'string', 'max:255'],
             'shipping_neighborhood' => ['required_if:delivery_method,' . Order::DELIVERY_SHIPPING, 'nullable', 'string', 'max:150'],

@@ -88,8 +88,8 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 ## 4. Estado de Progreso
 - [x] Creación de rama `rediseno-ui-afr`.
 - [x] Recopilación de información oficial y documento de identidad 2026.
-- [ ] Slice 1: Modelos, migraciones y panel administrativo de contenidos.
-- [ ] Slice 2: Header, Footer, Redes, WhatsApp y cintillo de garantía.
-- [ ] Slice 3: Home estilo AFR, carrusel y FAQs.
-- [ ] Slice 4: Checkout por etapas y cupones.
+- [x] Slice 1: Modelos, migraciones y panel administrativo de contenidos.
+- [x] Slice 2: Header, Footer, Redes, WhatsApp y cintillo de garantía.
+- [x] Slice 3: Home estilo AFR, carrusel y FAQs.
+- [x] Slice 4: Checkout por etapas, cotizador por C.P., cupones y documentos legales en PDF.
 - [ ] Slice 5: Comisión ML y precio tienda.

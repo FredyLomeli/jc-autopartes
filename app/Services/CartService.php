@@ -327,4 +327,31 @@ class CartService
         Session::forget(self::SESSION_KEY);
         Session::forget(self::COUPON_SESSION_KEY);
     }
+
+    /**
+     * Construye el listado de paquetes (peso y dimensiones) para cotizar paquetería.
+     *
+     * @param  array<int, array<string, mixed>>|null  $items
+     * @return array<int, array<string, float|int>>
+     */
+    public function buildShippingPackages(?array $items = null): array
+    {
+        $cartItems = $items ?? ($this->getCart()['items'] ?? []);
+        $packages = [];
+
+        foreach ($cartItems as $item) {
+            $product = $item['product'] ?? null;
+            $qty = max(1, (int) ($item['quantity'] ?? 1));
+
+            $packages[] = [
+                'quantity' => $qty,
+                'weight_kg' => (float) ($product->weight_kg ?? 4.0),
+                'length_cm' => (float) ($product->length_cm ?? 35.0),
+                'width_cm' => (float) ($product->width_cm ?? 30.0),
+                'height_cm' => (float) ($product->height_cm ?? 25.0),
+            ];
+        }
+
+        return $packages;
+    }
 }

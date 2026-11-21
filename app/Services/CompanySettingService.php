@@ -56,4 +56,21 @@ class CompanySettingService
 
         Cache::forget(self::CACHE_KEY);
     }
+
+    /**
+     * Crea o actualiza un ajuste individual y limpia la caché.
+     *
+     * @param  array<string, string>  $meta
+     */
+    public function set(string $key, ?string $value, array $meta = []): void
+    {
+        SiteSetting::updateOrCreate(
+            ['key' => $key],
+            array_merge([
+                'value' => (string) ($value ?? ''),
+            ], $meta)
+        );
+
+        Cache::forget(self::CACHE_KEY);
+    }
 }

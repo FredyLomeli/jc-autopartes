@@ -25,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Contracts\PaymentGateway::class,
             \App\Services\Payments\MercadoPagoPaymentGateway::class
         );
+
+        $this->app->bind(
+            \App\Contracts\ShippingQuoteProvider::class,
+            \App\Services\Shipping\SimulatedPaquetexpressQuoteProvider::class
+        );
     }
 
     /**
