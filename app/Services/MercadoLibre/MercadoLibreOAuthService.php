@@ -107,6 +107,7 @@ class MercadoLibreOAuthService
             'user_id' => (string) ($data['user_id'] ?? $token->user_id),
             'access_token' => $data['access_token'],
             'refresh_token' => $data['refresh_token'],
+            'scope' => $data['scope'] ?? $token->scope,
             'expires_at' => now()->addSeconds($expiresIn),
         ]);
 

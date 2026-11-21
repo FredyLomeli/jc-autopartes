@@ -69,16 +69,27 @@ class MercadoLibreCatalogSyncService
                 throw new RuntimeException('Cliente de marketplace no disponible para sincronización remota.');
             }
 
-            $userId = (string) ($options['user_id'] ?? '');
-            if (empty($userId) && $this->oauthService) {
-                $token = $this->oauthService->getActiveToken();
-                $userId = $token?->user_id ? (string) $token->user_id : 'me';
-            }
-            if (empty($userId)) {
-                $userId = 'me';
+            $userId = trim((string) ($options['user_id'] ?? ''));
+            if ($userId === '') {
+                try {
+                    $oauthService = $this->oauthService ?? app(MercadoLibreOAuthService::class);
+                    $token = $oauthService->getActiveToken();
+                    $userId = trim((string) ($token?->user_id ?? ''));
+                } catch (Throwable) {
+                    $userId = '';
+                }
             }
 
             try {
+                if ($userId === '') {
+                    $profile = $client->getUserProfile('me');
+                    $userId = trim((string) ($profile['id'] ?? ''));
+                }
+
+                if ($userId === '') {
+                    throw new RuntimeException('No se pudo obtener el ID numérico de la cuenta de Mercado Libre.');
+                }
+
                 $searchResult = $client->searchListingsWithScroll($userId, $scrollId, $limit, $status);
                 $itemIds = $searchResult['results'] ?? [];
                 $nextScrollId = $searchResult['scroll_id'] ?? null;

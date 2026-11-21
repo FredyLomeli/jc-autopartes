@@ -39,7 +39,8 @@ class MercadoLibreSyncController extends Controller
         $fixture = (bool) ($validated['fixture'] ?? false);
 
         // Si no se solicita fixture, verificar que la cuenta esté conectada
-        if (! $fixture && ! $this->oauthService->getActiveToken()) {
+        $activeToken = $fixture ? null : $this->oauthService->getActiveToken();
+        if (! $fixture && ! $activeToken) {
             return response()->json([
                 'success' => false,
                 'message' => 'No hay una cuenta de Mercado Libre vinculada. Conecta tu cuenta primero en Configuración.',
@@ -55,6 +56,7 @@ class MercadoLibreSyncController extends Controller
                 'offset' => $offset,
                 'status' => $status,
                 'fixture' => $fixture,
+                'user_id' => $activeToken?->user_id,
             ]);
 
             return response()->json([
