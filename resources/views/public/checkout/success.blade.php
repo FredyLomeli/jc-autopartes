@@ -101,7 +101,7 @@
                                                 · No. Parte: <strong class="font-mono">{{ $item->part_number }}</strong>
                                             @endif
                                             · Cantidad: <strong>{{ $item->quantity }}</strong>
-                                            · Garantía: <strong>{{ $item->warranty_days }} días</strong>
+                                            · <a href="{{ route('pages.warranty') }}" class="text-primary font-semibold hover:underline">Revisa nuestra garantía</a>
                                         </p>
                                     </div>
                                 </div>

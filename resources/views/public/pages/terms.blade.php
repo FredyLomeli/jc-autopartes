@@ -146,7 +146,7 @@
                     Garantías, Devoluciones y Cancelaciones
                 </h2>
                 <p>
-                    Todas las compras están respaldadas por nuestra <a href="{{ route('pages.warranty') }}" class="text-primary font-semibold hover:underline">Política de Garantía Oficial por Escrito</a> de 7, 15 o 30 días naturales según la categoría de la autoparte.
+                    Todas las compras están respaldadas por los términos vigentes en nuestra <a href="{{ route('pages.warranty') }}" class="text-primary font-semibold hover:underline">Política de Garantía Oficial por Escrito</a>.
                 </p>
                 <p>
                     En cancelaciones solicitadas por el cliente antes del despacho de la mercancía, se reembolsará el importe íntegro por el mismo método de pago utilizado. En devoluciones por incompatibilidad atribuible a error de selección del comprador una vez despachado el producto, los costos logísticos de flete de ida y vuelta correrán por cuenta del cliente, y la refacción deberá devolverse en las mismas condiciones, con empaque original y sellos intactos.

@@ -1,6 +1,6 @@
 @extends('layouts.public', [
     'title' => "{$product->title} ({$product->sku})",
-    'metaDescription' => "{$product->title} para {$product->vehicle_brand} {$product->vehicle_model} ({$product->year_start}-{$product->year_end}). Condición {$product->condition}, garantía escrita de {$product->warrantyDays()} días en JC Autopartes.",
+    'metaDescription' => "{$product->title} para {$product->vehicle_brand} {$product->vehicle_model} ({$product->year_start}-{$product->year_end}). Condición {$product->condition}, respaldada por nuestra política de garantía oficial en JC Autopartes.",
     'canonicalUrl' => $canonicalUrl ?? route('catalog.show', $product->slug),
     'ogType' => 'product',
     'ogImage' => $product->primary_photo_url,
@@ -70,7 +70,7 @@
                                 Condición {{ $product->condition }}
                             </span>
                             <span class="bg-[#E31221] text-white font-semibold px-2.5 py-1 rounded text-xs shadow-sm">
-                                Garantía {{ $warrantyDays }} Días
+                                Garantía Escrita
                             </span>
                         </div>
                     </div>
@@ -227,7 +227,10 @@
                     <!-- Sello de Garantía Oficial y Envío -->
                     <div class="bg-surface rounded-base border border-border p-4 text-xs text-gray-700 space-y-1.5">
                         <p class="font-bold text-dark">
-                            ✓ Garantía Oficial por Escrito de {{ $warrantyDays }} días naturales incluida en tu compra.
+                            ✓ Garantía Oficial por Escrito incluida en tu compra.
+                            <a href="{{ route('pages.warranty') }}" class="text-primary hover:underline ml-1">
+                                Revisa nuestra garantía &rarr;
+                            </a>
                         </p>
                         <p>
                             ✓ Envíos a todo México desde nuestra bodega en {{ $business['city'] }} o recolección directa en mostrador.
@@ -316,9 +319,13 @@
                                 <dt class="text-gray-600">Condición Física</dt>
                                 <dd class="font-semibold text-dark">Grado {{ $product->condition }}</dd>
                             </div>
-                            <div class="py-2 flex justify-between">
+                            <div class="py-2 flex justify-between items-center gap-4">
                                 <dt class="text-gray-600">Cobertura de Garantía</dt>
-                                <dd class="font-bold text-primary">{{ $warrantyDays }} días naturales por escrito</dd>
+                                <dd>
+                                    <a href="{{ route('pages.warranty') }}" class="font-bold text-primary hover:underline">
+                                        Revisa nuestra garantía &rarr;
+                                    </a>
+                                </dd>
                             </div>
                             <div class="py-2 flex justify-between">
                                 <dt class="text-gray-600">Ubicación de Salida</dt>

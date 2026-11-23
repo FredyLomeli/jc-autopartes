@@ -89,7 +89,6 @@
                                             @if($item->part_number)
                                                 · No. Parte: {{ $item->part_number }}
                                             @endif
-                                            · Garantía: {{ $item->warranty_days }} días
                                         </span>
                                     </td>
                                     <td style="text-align: center; color: #111827; font-weight: 700;">
@@ -150,7 +149,8 @@
                         <strong>¿Requieres Factura Fiscal?</strong> Escríbenos por WhatsApp con tu Constancia de Situación Fiscal (CSF) actualizada y el folio de tu orden <strong>{{ $order->order_number }}</strong>.
                     </p>
                     <p style="margin: 0 0 6px 0;">
-                        <strong>Póliza de Garantía:</strong> Tus piezas cuentan con garantía escrita a partir del día de entrega. No aplica en partes quemadas, desarmadas o alteradas.
+                        <strong>Póliza de Garantía:</strong> Tus piezas cuentan con garantía escrita conforme a nuestra
+                        <a href="{{ route('pages.warranty') }}" style="color: #E31221; font-weight: 600;">Política de Garantía Oficial</a>.
                     </p>
                     <p style="margin: 0; color: #9ca3af;">
                         JC Autopartes · {{ $business['address'] }} · Tepatitlán de Morelos, Jalisco.

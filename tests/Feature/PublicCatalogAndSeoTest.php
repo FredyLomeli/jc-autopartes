@@ -82,7 +82,9 @@ class PublicCatalogAndSeoTest extends TestCase
         $response->assertSee($product->title, false);
         $response->assertSee($product->sku, false);
         $response->assertSee('$18,500.00 MXN', false);
-        $response->assertSee('Garantía 30 Días', false);
+        $response->assertSee('Garantía Escrita', false);
+        $response->assertSee('Revisa nuestra garantía', false);
+        $response->assertSee(route('pages.warranty'), false);
         $response->assertSee('https://wa.me/523331665290?text=', false);
         $response->assertSee(urlencode($product->title), false);
 

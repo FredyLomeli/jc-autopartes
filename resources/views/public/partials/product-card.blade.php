@@ -28,7 +28,7 @@
                     Condición {{ $product->condition }}
                 </span>
                 <span class="bg-[#E31221] text-white font-semibold px-2 py-0.5 rounded text-xs shadow-sm">
-                    Garantía {{ $warrantyDays }} días
+                    Garantía Escrita
                 </span>
             </div>
 

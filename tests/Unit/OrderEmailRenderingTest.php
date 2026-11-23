@@ -66,7 +66,8 @@ class OrderEmailRenderingTest extends TestCase
         $this->assertStringContainsString('JC-ALT-042', $rendered);
         $this->assertStringContainsString('GM-13500582', $rendered);
         $this->assertStringContainsString('3,150.00', $rendered);
-        $this->assertStringContainsString('Garantía: 15 días', $rendered);
+        $this->assertStringContainsString('Política de Garantía Oficial', $rendered);
+        $this->assertStringContainsString(route('pages.warranty'), $rendered);
         $this->assertStringContainsString('Hidalgo 120', $rendered);
         $this->assertStringContainsString('Dejar en taller mecánico El Güero', $rendered);
         $this->assertStringContainsString('¿Requieres Factura Fiscal?', $rendered);

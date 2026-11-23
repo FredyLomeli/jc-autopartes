@@ -1,7 +1,7 @@
 @php
     $business = config('business');
     $pageTitle = isset($title) ? "{$title} | " . ($companySettings['company_name'] ?? $business['name']) : ($companySettings['company_name'] ?? $business['name']) . " — " . ($companySettings['company_slogan'] ?? $business['tagline']);
-    $pageDescription = $metaDescription ?? 'Refacciones y autopartes usadas originales en Tepatitlán, Jalisco. Motores, transmisiones, colisión, suspensión y partes eléctricas con garantía escrita de 7 a 30 días y envíos a todo México.';
+    $pageDescription = $metaDescription ?? 'Refacciones y autopartes usadas originales en Tepatitlán, Jalisco. Motores, transmisiones, colisión, suspensión y partes eléctricas con garantía oficial por escrito y envíos a todo México.';
     $pageCanonical = $canonicalUrl ?? url()->current();
     $cartCount = collect(session('cart.items', []))->sum('quantity');
 @endphp

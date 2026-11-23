@@ -1,18 +1,18 @@
 @extends('layouts.public', [
     'title' => 'Inicio — Autopartes y Refacciones Originales Usadas',
-    'metaDescription' => 'Encuentra motores, transmisiones, colisión, suspensión y partes eléctricas originales usadas con garantía escrita de 7 a 30 días en JC Autopartes, Tepatitlán, Jalisco.',
+    'metaDescription' => 'Encuentra motores, transmisiones, colisión, suspensión y partes eléctricas originales usadas con garantía oficial por escrito en JC Autopartes, Tepatitlán, Jalisco.',
     'canonicalUrl' => route('home'),
 ])
 
 @php
     $business = config('business');
     $categoryCards = $categories ?? [
-        ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => '30 días de garantía', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.'],
-        ['slug' => 'Transmisiones', 'name' => 'Transmisiones Automáticas y Estándar', 'warranty' => '30 días de garantía', 'desc' => 'Cajas de velocidades automáticas, CVT y manuales revisadas.'],
-        ['slug' => 'Partes Internas', 'name' => 'Cabezas y Partes Internas', 'warranty' => '15 días de garantía', 'desc' => 'Cabezas de motor, cigüeñales, árboles de levas y múltiples.'],
-        ['slug' => 'Colision', 'name' => 'Carrocería y Colisión', 'warranty' => '7 días de garantía', 'desc' => 'Cofres, puertas, salpicaderas, fascias, faros, calaveras y espejos.'],
-        ['slug' => 'Suspension', 'name' => 'Suspensión y Dirección', 'warranty' => '7 días de garantía', 'desc' => 'Horquillas, amortiguadores, cajas de dirección, puentes y mangos.'],
-        ['slug' => 'Electrico', 'name' => 'Sistema Eléctrico y Electrónico', 'warranty' => '7 días de garantía', 'desc' => 'Alternadores, marchas, módulos, cuerpos de aceleración y compresores.'],
+        ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => 'Garantía por escrito', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.'],
+        ['slug' => 'Transmisiones', 'name' => 'Transmisiones Automáticas y Estándar', 'warranty' => 'Garantía por escrito', 'desc' => 'Cajas de velocidades automáticas, CVT y manuales revisadas.'],
+        ['slug' => 'Partes Internas', 'name' => 'Cabezas y Partes Internas', 'warranty' => 'Garantía por escrito', 'desc' => 'Cabezas de motor, cigüeñales, árboles de levas y múltiples.'],
+        ['slug' => 'Colision', 'name' => 'Carrocería y Colisión', 'warranty' => 'Garantía por escrito', 'desc' => 'Cofres, puertas, salpicaderas, fascias, faros, calaveras y espejos.'],
+        ['slug' => 'Suspension', 'name' => 'Suspensión y Dirección', 'warranty' => 'Garantía por escrito', 'desc' => 'Horquillas, amortiguadores, cajas de dirección, puentes y mangos.'],
+        ['slug' => 'Electrico', 'name' => 'Sistema Eléctrico y Electrónico', 'warranty' => 'Garantía por escrito', 'desc' => 'Alternadores, marchas, módulos, cuerpos de aceleración y compresores.'],
     ];
 
     $valuesList = [];
@@ -188,7 +188,7 @@
                         Autopartes originales garantizadas
                     </h3>
                     <p class="text-xs text-gray-500 max-w-xs leading-relaxed">
-                        Piezas revisadas, probadas y respaldadas con póliza de garantía escrita de 7 a 30 días.
+                        Piezas revisadas, probadas y respaldadas por nuestra <a href="{{ route('pages.warranty') }}" class="text-primary font-semibold hover:underline">política de garantía oficial</a>.
                     </p>
                 </div>
 

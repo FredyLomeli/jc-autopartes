@@ -270,9 +270,6 @@ const handleSyncCompleted = () => {
                                     <span class="px-2 py-0.5 rounded bg-dark text-white text-xs font-bold">
                                         Grado {{ item.condition }}
                                     </span>
-                                    <span class="block text-[11px] text-gray-500 mt-0.5">
-                                        Garantía {{ item.warranty_days }} días
-                                    </span>
                                 </td>
 
                                 <td class="px-5 py-3.5 whitespace-nowrap">

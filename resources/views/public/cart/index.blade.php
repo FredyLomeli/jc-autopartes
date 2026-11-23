@@ -64,9 +64,9 @@
                                         <span class="px-2 py-0.5 rounded bg-[#111111]/90 text-white text-[11px] font-semibold">
                                             Condición {{ $item['condition'] }}
                                         </span>
-                                        <span class="px-2 py-0.5 rounded bg-[#E31221] text-white text-[11px] font-semibold">
-                                            Garantía {{ $item['warranty_days'] }} días
-                                        </span>
+                                        <a href="{{ route('pages.warranty') }}" class="px-2 py-0.5 rounded bg-[#E31221] hover:opacity-90 text-white text-[11px] font-semibold transition">
+                                            Revisa nuestra garantía
+                                        </a>
                                     </div>
 
                                     <h2 class="text-sm sm:text-base font-extrabold text-dark hover:text-primary transition-colors">
@@ -228,7 +228,10 @@
 
                     <div class="bg-surface rounded-base border border-border p-3.5 text-xs text-gray-600 space-y-1">
                         <p class="font-bold text-dark">✓ Existencias verificadas en servidor</p>
-                        <p>Todas tus piezas incluyen Certificado de Garantía Oficial de 7 a 30 días.</p>
+                        <p>
+                            Consulta los alcances y términos en nuestra
+                            <a href="{{ route('pages.warranty') }}" class="text-primary font-semibold hover:underline">Política de Garantía Oficial</a>.
+                        </p>
                     </div>
                 </aside>
             </div>

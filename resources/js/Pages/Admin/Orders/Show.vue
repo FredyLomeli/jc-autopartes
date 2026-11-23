@@ -240,9 +240,6 @@ const getOrderStatusBadgeClass = (status) => {
                                     <div class="text-xs text-gray-500 mt-1 space-x-2">
                                         <span>SKU: <strong class="font-mono text-dark">{{ item.product_sku }}</strong></span>
                                         <span v-if="item.part_number">· No. Parte: <strong class="font-mono text-dark">{{ item.part_number }}</strong></span>
-                                        <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-bold">
-                                            Garantía: {{ item.warranty_days }} días
-                                        </span>
                                     </div>
                                 </div>
                             </div>
