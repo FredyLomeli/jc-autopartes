@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Services\CatalogService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PublicCatalogAndSeoTest extends TestCase
@@ -129,5 +131,57 @@ class PublicCatalogAndSeoTest extends TestCase
 
         $sitemap->assertSee(route('catalog.show', $published->slug), false);
         $sitemap->assertDontSee(route('catalog.show', $draft->slug), false);
+    }
+
+    public function test_filter_options_are_cached_and_invalidated_properly(): void
+    {
+        Cache::flush();
+
+        $catalogService = app(CatalogService::class);
+        $options = $catalogService->getFilterOptions();
+
+        $this->assertTrue(Cache::has(CatalogService::FILTER_OPTIONS_CACHE_KEY));
+        $this->assertContains('Nissan', $options['brands']);
+
+        $catalogService->clearFilterOptionsCache();
+        $this->assertFalse(Cache::has(CatalogService::FILTER_OPTIONS_CACHE_KEY));
+    }
+
+    public function test_catalog_batch_endpoint_returns_lazy_load_cards_and_respects_filters(): void
+    {
+        // El seeder trae 35 artículos publicados -> con 12 por página hay páginas 1, 2 y 3
+        $page2 = $this->getJson('/refacciones/lote?page=2');
+        $page2->assertStatus(200)
+            ->assertJson([
+                'has_more' => true,
+                'next_page' => 3,
+                'loaded_in_batch' => 12,
+            ]);
+        $this->assertStringContainsString('<article', $page2->json('html'));
+
+        $page3 = $this->getJson('/refacciones/lote?page=3');
+        $page3->assertStatus(200)
+            ->assertJson([
+                'has_more' => false,
+                'next_page' => null,
+                'loaded_in_batch' => 11,
+            ]);
+
+        // Con filtro específico (ej. brand=Nissan&category=Motores) debe respetar resultados
+        $filtered = $this->getJson('/refacciones/lote?page=1&brand=Nissan&category=Motores');
+        $filtered->assertStatus(200)
+            ->assertJson(['has_more' => false]);
+        $this->assertStringContainsString('JC-NIS-001', $filtered->json('html'));
+        $this->assertStringNotContainsString('JC-CHE-001', $filtered->json('html'));
+    }
+
+    public function test_catalog_page_renders_ssr_cards_and_lazy_load_markup_with_noscript_fallback(): void
+    {
+        $response = $this->get('/refacciones');
+
+        $response->assertStatus(200);
+        $response->assertSee(route('catalog.batch', [], false), false);
+        $response->assertSee('Cargar más refacciones', false);
+        $response->assertSee('<noscript>', false);
     }
 }

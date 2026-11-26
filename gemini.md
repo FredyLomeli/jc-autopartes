@@ -60,3 +60,11 @@ Todo comando de PHP, Artisan, Composer, Pint, PHPStan, Pest/PHPUnit o NPM **DEBE
 - **NPM / Vite:** `docker exec -i jc-autopartes-app npm <comando>`
 - **Laravel Boost MCP (si está activo):** `docker exec -i jc-autopartes-app php artisan boost:mcp`
 - **Proxy inverso:** La app corre detrás de proxy (p. ej. Cloudflare Tunnel / Nginx). Usa `TRUST_PROXIES=true` (o `*` / IPs específicas) en `.env`, leído mediante `config('app.trust_proxies')`.
+
+### Regla Crítica Antes de Ejecutar Pruebas (`php artisan test` / PHPUnit)
+El contenedor puede tener activa la caché de Laravel (`php artisan optimize` → `bootstrap/cache/config.php` y `routes-v7.php`), lo que hace que Laravel ignore `phpunit.xml` y apunte a MariaDB real:
+1. **Validación previa obligatoria:** Antes de ejecutar cualquier test, verifica si existe `bootstrap/cache/config.php` (o `routes-v7.php`) y ejecuta primero:
+   `docker exec -u www-data -i jc-autopartes-app php artisan optimize:clear`
+2. **Nunca omitas el bloqueo:** `tests/TestCase.php` abortará automáticamente si existe `bootstrap/cache/config.php` o si la conexión efectiva no es `sqlite` `:memory:`.
+3. **Al terminar los tests:** Si el contenedor está en operación/homelab, vuelve a dejar optimizado el caché con:
+   `docker exec -u www-data -i jc-autopartes-app php artisan optimize` (y recuerda no correr tests de nuevo sin repetir el paso 1).

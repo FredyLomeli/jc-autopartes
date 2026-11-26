@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 // Rutas Públicas (Blade + Tailwind + Alpine.js — Renderizado en Servidor por SEO)
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/refacciones', [CatalogController::class, 'index'])->name('catalog.index');
+Route::get('/refacciones/lote', [CatalogController::class, 'batch'])->name('catalog.batch');
 Route::get('/refacciones/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
 // Carrito en sesión del servidor y Checkout visual

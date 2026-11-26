@@ -7,10 +7,13 @@ use App\Services\CatalogService;
 use App\Services\PriceService;
 use App\Services\StockService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CatalogController extends Controller
 {
+    private const PER_PAGE = 12;
+
     public function __construct(
         private readonly CatalogService $catalogService,
         private readonly PriceService $priceService,
@@ -19,21 +22,10 @@ class CatalogController extends Controller
 
     public function index(Request $request): View
     {
-        $filters = $request->only([
-            'q',
-            'category',
-            'brand',
-            'model',
-            'year',
-            'condition',
-            'min_price',
-            'max_price',
-            'sort',
-            'ofertas',
-        ]);
+        $filters = $this->extractFilters($request);
 
         $filterOptions = $this->catalogService->getFilterOptions();
-        $products = $this->catalogService->filterProducts($filters, 12);
+        $products = $this->catalogService->filterProducts($filters, self::PER_PAGE);
 
         return view('public.catalog.index', [
             'products' => $products,
@@ -48,6 +40,47 @@ class CatalogController extends Controller
             'stockService' => $this->stockService,
             // Regla SEO: toda página filtrada apunta su canonical al catálogo limpio sin query params
             'canonicalUrl' => route('catalog.index'),
+        ]);
+    }
+
+    /**
+     * Entrega un lote adicional de tarjetas HTML para carga progresiva (Lazy Load) sin re-renderizar el layout.
+     */
+    public function batch(Request $request): JsonResponse
+    {
+        $filters = $this->extractFilters($request);
+        $products = $this->catalogService->filterProductsBatch($filters, self::PER_PAGE);
+
+        $html = view('public.partials.catalog-cards', [
+            'products' => $products,
+            'priceService' => $this->priceService,
+            'stockService' => $this->stockService,
+        ])->render();
+
+        return response()->json([
+            'html' => $html,
+            'has_more' => $products->hasMorePages(),
+            'next_page' => $products->hasMorePages() ? $products->currentPage() + 1 : null,
+            'loaded_in_batch' => $products->count(),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractFilters(Request $request): array
+    {
+        return $request->only([
+            'q',
+            'category',
+            'brand',
+            'model',
+            'year',
+            'condition',
+            'min_price',
+            'max_price',
+            'sort',
+            'ofertas',
         ]);
     }
 

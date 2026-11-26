@@ -7,9 +7,76 @@
 @php
     $business = config('business');
     $activeFiltersCount = collect($filters ?? [])->except(['sort'])->filter(fn ($v) => $v !== null && $v !== '')->count();
+    $initialShownCount = $products->count();
+    $batchEndpoint = route('catalog.batch', [], false);
+    $batchQueryParams = collect($filters ?? [])
+        ->filter(fn ($v) => $v !== null && $v !== '')
+        ->all();
 @endphp
 
 @section('content')
+    <div
+        x-data="{
+            filtersOpen: false,
+            loading: false,
+            errorLoading: false,
+            hasMore: {{ $products->hasMorePages() ? 'true' : 'false' }},
+            nextPage: {{ $products->hasMorePages() ? ($products->currentPage() + 1) : 'null' }},
+            loadedCount: {{ $initialShownCount }},
+            totalCount: {{ $products->total() }},
+            batchUrl: '{{ $batchEndpoint }}',
+            activeParams: @js($batchQueryParams),
+            observer: null,
+            init() {
+                if (!this.hasMore || typeof IntersectionObserver === 'undefined') {
+                    return;
+                }
+                this.$nextTick(() => {
+                    const sentinel = this.$refs.loadMoreSentinel;
+                    if (!sentinel) return;
+                    this.observer = new IntersectionObserver((entries) => {
+                        if (entries.some((entry) => entry.isIntersecting)) {
+                            this.loadMore();
+                        }
+                    }, { rootMargin: '320px 0px' });
+                    this.observer.observe(sentinel);
+                });
+            },
+            async loadMore() {
+                if (this.loading || !this.hasMore || !this.nextPage) {
+                    return;
+                }
+                this.loading = true;
+                this.errorLoading = false;
+                try {
+                    const params = new URLSearchParams({
+                        ...this.activeParams,
+                        page: String(this.nextPage),
+                    });
+                    const response = await fetch(`${this.batchUrl}?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    if (!response.ok) {
+                        throw new Error('Error al cargar lote');
+                    }
+                    const data = await response.json();
+                    if (data.html && this.$refs.productsGrid) {
+                        this.$refs.productsGrid.insertAdjacentHTML('beforeend', data.html);
+                    }
+                    this.loadedCount += Number(data.loaded_in_batch || 0);
+                    this.hasMore = Boolean(data.has_more);
+                    this.nextPage = data.next_page || null;
+                    if (!this.hasMore && this.observer) {
+                        this.observer.disconnect();
+                    }
+                } catch (e) {
+                    this.errorLoading = true;
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }"
+    >
     <!-- Encabezado de Catálogo y Breadcrumb -->
     <div class="bg-white border-b border-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -31,7 +98,7 @@
                     </p>
                 </div>
                 <div class="text-xs sm:text-sm font-semibold text-gray-700 bg-surface px-3.5 py-2 rounded-base border border-border self-start md:self-auto">
-                    Mostrando <span class="font-extrabold text-dark">{{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }}</span>
+                    Mostrando <span class="font-extrabold text-dark" x-text="totalCount > 0 ? (`{{ $products->firstItem() ?? 1 }}–` + Math.min(totalCount, {{ ($products->firstItem() ?? 1) - 1 }} + loadedCount)) : '0'">{{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }}</span>
                     de <span class="font-extrabold text-primary">{{ $products->total() }}</span> piezas disponibles
                 </div>
             </div>
@@ -39,7 +106,7 @@
     </div>
 
     <!-- Contenido Principal del Catálogo (Sidebar de Filtros + Grid) -->
-    <div x-data="{ filtersOpen: false }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         @if(!empty($filters['ofertas']))
             <div class="mb-6 bg-gradient-to-r from-red-600 via-rose-700 to-red-800 text-white rounded-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                 <div class="flex items-center gap-3">
@@ -301,15 +368,47 @@
                 @endif
 
                 @if($products->count() > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                        @foreach($products as $product)
-                            @include('public.partials.product-card', ['product' => $product])
-                        @endforeach
+                    <div x-ref="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        @include('public.partials.catalog-cards', [
+                            'products' => $products,
+                            'priceService' => $priceService,
+                            'stockService' => $stockService,
+                        ])
                     </div>
 
-                    <!-- Paginación del Servidor conservando Query String -->
-                    <div class="mt-8">
-                        {{ $products->links() }}
+                    <!-- Carga Progresiva (Lazy Load) + Fallback sin JS -->
+                    <div class="mt-8 flex flex-col items-center gap-3">
+                        <div x-ref="loadMoreSentinel" class="h-1 w-full" aria-hidden="true"></div>
+
+                        <template x-if="errorLoading">
+                            <p class="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-base">
+                                No se pudieron cargar más refacciones. Intenta nuevamente.
+                            </p>
+                        </template>
+
+                        <button
+                            type="button"
+                            x-show="hasMore"
+                            x-on:click="loadMore()"
+                            :disabled="loading"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-base bg-dark hover:bg-gray-800 disabled:opacity-60 text-white text-sm font-bold transition-colors shadow-sm"
+                        >
+                            <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            <span x-text="loading ? 'Cargando más piezas...' : 'Cargar más refacciones'">Cargar más refacciones</span>
+                        </button>
+
+                        <p x-show="!hasMore && loadedCount > 0" x-cloak class="text-xs font-semibold text-gray-500">
+                            Has llegado al final de los resultados.
+                        </p>
+
+                        <noscript>
+                            <div class="mt-4 w-full">
+                                {{ $products->links() }}
+                            </div>
+                        </noscript>
                     </div>
                 @else
                     <!-- Estado Vacío Cuidado -->
@@ -338,5 +437,6 @@
                 @endif
             </div>
         </div>
+    </div>
     </div>
 @endsection

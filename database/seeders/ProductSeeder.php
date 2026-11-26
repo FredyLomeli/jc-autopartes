@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Product;
 use App\Models\ProductPhoto;
+use App\Services\CatalogService;
 use App\Services\PriceService;
 use App\Services\StockService;
 use Illuminate\Database\Seeder;
@@ -150,5 +151,7 @@ class ProductSeeder extends Seeder
                 ]
             );
         }
+
+        app(CatalogService::class)->clearFilterOptionsCache();
     }
 }

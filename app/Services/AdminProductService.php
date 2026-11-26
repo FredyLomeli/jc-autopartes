@@ -261,6 +261,8 @@ class AdminProductService
                 $uploadedPhotos
             );
 
+            app(CatalogService::class)->clearFilterOptionsCache();
+
             return $product->fresh(['photos']);
         });
     }
@@ -318,6 +320,8 @@ class AdminProductService
                 );
             }
 
+            app(CatalogService::class)->clearFilterOptionsCache();
+
             return $product->fresh(['photos']);
         });
     }
@@ -331,6 +335,8 @@ class AdminProductService
             $product->photos()->delete();
             $product->delete();
         });
+
+        app(CatalogService::class)->clearFilterOptionsCache();
     }
 
     /**

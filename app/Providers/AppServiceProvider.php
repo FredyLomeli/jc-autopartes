@@ -16,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->scoped(CatalogService::class);
+
         $this->app->bind(
             \App\Contracts\MarketplaceClient::class,
             \App\Services\MercadoLibre\MercadoLibreClient::class

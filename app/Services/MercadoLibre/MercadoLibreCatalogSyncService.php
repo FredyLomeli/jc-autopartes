@@ -6,6 +6,7 @@ use App\Contracts\MarketplaceClient;
 use App\Models\MarketplaceRawItem;
 use App\Models\Product;
 use App\Models\ProductPhoto;
+use App\Services\CatalogService;
 use App\Services\PriceService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
@@ -238,6 +239,10 @@ class MercadoLibreCatalogSyncService
         $reportPath = $this->generateDiagnosticReport($batchResult, $options);
         $batchResult['report_path'] = $reportPath;
 
+        if ($batchResult['processed_count'] > 0) {
+            app(CatalogService::class)->clearFilterOptionsCache();
+        }
+
         return $batchResult;
     }
 
@@ -334,6 +339,10 @@ class MercadoLibreCatalogSyncService
             'items' => $processedItems,
             'errors' => [],
         ], ['scroll_id' => null, 'offset' => 0, 'mode' => 'completa_estandar']);
+
+        if (! empty($processedItems)) {
+            app(CatalogService::class)->clearFilterOptionsCache();
+        }
 
         return [
             'total' => count($payloads),

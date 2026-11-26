@@ -5,17 +5,41 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Promotion;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class CatalogService
 {
+    public const FILTER_OPTIONS_CACHE_KEY = 'catalog_filter_options_v1';
+
+    private const FILTER_OPTIONS_TTL_SECONDS = 900;
+
+    /**
+     * Memoización por petición HTTP para evitar lecturas repetidas desde View::composer y controladores.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $memoizedFilterOptions = null;
+
     public function __construct(
         private readonly PriceService $priceService,
         private readonly StockService $stockService,
     ) {}
 
     /**
-     * Obtiene las opciones dinámicas para los filtros de búsqueda sobre artículos publicados.
+     * Limpia el caché de opciones de filtro cuando cambia el catálogo publicado.
+     */
+    public function clearFilterOptionsCache(): void
+    {
+        $this->memoizedFilterOptions = null;
+        Cache::forget(self::FILTER_OPTIONS_CACHE_KEY);
+    }
+
+    /**
+     * Obtiene las opciones dinámicas para los filtros de búsqueda sobre artículos publicados
+     * mediante consultas SQL agregadas y cacheadas (evitando cargar todo el catálogo en memoria).
      *
      * @return array{
      *     brands: array<int, string>,
@@ -28,30 +52,83 @@ class CatalogService
      */
     public function getFilterOptions(): array
     {
-        $published = Product::query()
-            ->published()
-            ->select(['category', 'vehicle_brand', 'vehicle_model', 'year_start', 'year_end'])
-            ->get();
+        if ($this->memoizedFilterOptions !== null) {
+            return $this->memoizedFilterOptions;
+        }
 
-        $brands = $published->pluck('vehicle_brand')->filter()->unique()->sort()->values()->all();
+        $this->memoizedFilterOptions = Cache::remember(
+            self::FILTER_OPTIONS_CACHE_KEY,
+            self::FILTER_OPTIONS_TTL_SECONDS,
+            fn (): array => $this->computeFilterOptions()
+        );
+
+        return $this->memoizedFilterOptions;
+    }
+
+    /**
+     * @return array{
+     *     brands: array<int, string>,
+     *     models: array<int, string>,
+     *     modelsByBrand: array<string, array<int, string>>,
+     *     years: array<int, int>,
+     *     categories: array<int, array{slug: string, name: string, warranty: string, desc: string, count: int}>,
+     *     conditions: array<string, string>
+     * }
+     */
+    private function computeFilterOptions(): array
+    {
+        $brands = Product::query()
+            ->published()
+            ->whereNotNull('vehicle_brand')
+            ->where('vehicle_brand', '!=', '')
+            ->distinct()
+            ->orderBy('vehicle_brand')
+            ->pluck('vehicle_brand')
+            ->values()
+            ->all();
+
         if (empty($brands)) {
             $brands = ['Nissan', 'Chevrolet', 'Toyota', 'Ford', 'Honda', 'Volkswagen'];
         }
 
-        $models = $published->pluck('vehicle_model')->filter()->unique()->sort()->values()->all();
+        $brandModelPairs = Product::query()
+            ->published()
+            ->select(['vehicle_brand', 'vehicle_model'])
+            ->whereNotNull('vehicle_model')
+            ->where('vehicle_model', '!=', '')
+            ->distinct()
+            ->orderBy('vehicle_model')
+            ->get();
+
+        $models = $brandModelPairs
+            ->pluck('vehicle_model')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
 
         $modelsByBrand = [];
-        foreach ($published->groupBy('vehicle_brand') as $brand => $items) {
+        foreach ($brandModelPairs->groupBy('vehicle_brand') as $brand => $items) {
             if ($brand !== '') {
-                $modelsByBrand[$brand] = $items->pluck('vehicle_model')->filter()->unique()->sort()->values()->all();
+                $modelsByBrand[$brand] = $items->pluck('vehicle_model')->filter()->unique()->values()->all();
             }
         }
 
-        $minYear = (int) ($published->min('year_start') ?: 2010);
-        $maxYear = (int) ($published->max('year_end') ?: (int) date('Y'));
+        $yearBounds = Product::query()
+            ->published()
+            ->selectRaw('MIN(year_start) as min_year, MAX(year_end) as max_year')
+            ->first();
+
+        $minYear = (int) ($yearBounds?->min_year ?: 2010);
+        $maxYear = (int) ($yearBounds?->max_year ?: (int) date('Y'));
         $years = range(max($maxYear, (int) date('Y')), min($minYear, 2008));
 
-        $categoryCounts = $published->groupBy('category')->map->count();
+        $categoryCounts = Product::query()
+            ->published()
+            ->selectRaw('category, COUNT(*) as aggregate')
+            ->groupBy('category')
+            ->pluck('aggregate', 'category');
 
         $baseCategories = [
             ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => 'Garantía por escrito', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.'],
@@ -130,11 +207,35 @@ class CatalogService
     }
 
     /**
-     * Filtra y pagina los artículos publicados según los parámetros de la URL.
+     * Filtra y pagina los artículos publicados según los parámetros de la URL (renderizado inicial SSR).
      *
      * @param  array<string, mixed>  $filters
      */
     public function filterProducts(array $filters, int $perPage = 12): LengthAwarePaginator
+    {
+        return $this->buildFilteredQuery($filters)
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * Filtra y obtiene lotes progresivos sin recalcular COUNT(*) total (ideal para Lazy Load).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function filterProductsBatch(array $filters, int $perPage = 12): Paginator
+    {
+        return $this->buildFilteredQuery($filters)
+            ->simplePaginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * Construye la consulta filtrada y ordenada compartida entre SSR y lotes AJAX.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    private function buildFilteredQuery(array $filters): Builder
     {
         $query = Product::query()
             ->select(self::LISTING_COLUMNS)
@@ -146,9 +247,9 @@ class CatalogService
             $query->where(function ($sub) use ($search) {
                 $sub->where('title', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('part_number', 'like', "%{$search}%")
                     ->orWhere('vehicle_brand', 'like', "%{$search}%")
-                    ->orWhere('vehicle_model', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('vehicle_model', 'like', "%{$search}%");
             });
         }
 
@@ -223,7 +324,7 @@ class CatalogService
             default => $query->orderByDesc('is_featured')->orderByDesc('id'),
         };
 
-        return $query->paginate($perPage)->withQueryString();
+        return $query;
     }
 
     /**

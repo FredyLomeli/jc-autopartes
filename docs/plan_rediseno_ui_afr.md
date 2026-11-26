@@ -92,4 +92,5 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 - [x] Slice 2: Header, Footer, Redes, WhatsApp y cintillo de garantía.
 - [x] Slice 3: Home estilo AFR, carrusel y FAQs.
 - [x] Slice 4: Checkout por etapas, cotizador por C.P., cupones y documentos legales en PDF.
+- [x] Optimización de Rendimiento y Lazy Load en Catálogo (`/refacciones` + `GET /refacciones/lote`): caché de filtros (`CatalogService::getFilterOptions()`), índices compuestos/FULLTEXT en `products`, scroll infinito con Alpine.js (`IntersectionObserver` + botón manual + `<noscript>`) y bloqueo preventivo de tests en `TestCase.php`.
 - [ ] Slice 5: Comisión ML y precio tienda.
