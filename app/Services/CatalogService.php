@@ -243,14 +243,7 @@ class CatalogService
             ->with('primaryPhoto');
 
         if (! empty($filters['q'])) {
-            $search = trim((string) $filters['q']);
-            $query->where(function ($sub) use ($search) {
-                $sub->where('title', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('part_number', 'like', "%{$search}%")
-                    ->orWhere('vehicle_brand', 'like', "%{$search}%")
-                    ->orWhere('vehicle_model', 'like', "%{$search}%");
-            });
+            $this->applySearchFilter($query, (string) $filters['q']);
         }
 
         if (! empty($filters['category'])) {
@@ -325,6 +318,83 @@ class CatalogService
         };
 
         return $query;
+    }
+
+    /**
+     * Aplica búsqueda combinada por palabras (tokens AND entre palabras, OR entre columnas),
+     * soportando orden libre, abreviaturas del ramo automotriz y años dentro del texto.
+     */
+    public function applySearchFilter(Builder $query, string $rawSearch, bool $includeYearMatch = true): void
+    {
+        $clean = trim($rawSearch);
+        if ($clean === '') {
+            return;
+        }
+
+        $rawTokens = preg_split('/\s+/u', $clean) ?: [];
+        $stopWords = ['de', 'del', 'la', 'el', 'los', 'las', 'para', 'con', 'en', 'y'];
+
+        $tokens = array_values(array_filter(
+            $rawTokens,
+            fn (string $t): bool => $t !== '' && (count($rawTokens) === 1 || ! in_array(mb_strtolower($t), $stopWords, true))
+        ));
+
+        if (empty($tokens)) {
+            $tokens = array_values(array_filter($rawTokens, fn (string $t): bool => $t !== ''));
+        }
+
+        $tokens = array_slice($tokens, 0, 6);
+
+        $abbreviations = [
+            'chev' => ['chev', 'chevrolet'],
+            'chevy' => ['chevy'],
+            'vw' => ['vw', 'volkswagen'],
+            'mb' => ['mb', 'mercedes', 'mercedes-benz'],
+            'izq' => ['izq', 'izquierd', 'lh'],
+            'lh' => ['lh', 'izq', 'izquierd'],
+            'der' => ['der', 'derech', 'rh'],
+            'rh' => ['rh', 'der', 'derech'],
+            'del' => ['del', 'delanter'],
+            'tras' => ['tras', 'traser'],
+            'std' => ['std', 'estandar', 'estándar', 'manual'],
+            'aut' => ['aut', 'automatic', 'automátic'],
+            'ac' => ['ac', 'a/c', 'a/a', 'aire', 'clima'],
+        ];
+
+        $columns = [
+            'title',
+            'sku',
+            'part_number',
+            'oem_number',
+            'mercadolibre_id',
+            'vehicle_brand',
+            'vehicle_model',
+            'side',
+            'position',
+        ];
+
+        foreach ($tokens as $token) {
+            $lower = mb_strtolower($token);
+            $variants = $abbreviations[$lower] ?? [$token];
+            $isYear = $includeYearMatch && preg_match('/^(19|20)\d{2}$/', $token) === 1;
+            $yearInt = $isYear ? (int) $token : null;
+
+            $query->where(function (Builder $tokenGroup) use ($columns, $variants, $isYear, $yearInt) {
+                foreach ($variants as $variant) {
+                    $like = "%{$variant}%";
+                    foreach ($columns as $column) {
+                        $tokenGroup->orWhere($column, 'like', $like);
+                    }
+                }
+
+                if ($isYear && $yearInt !== null) {
+                    $tokenGroup->orWhere(function (Builder $yearRange) use ($yearInt) {
+                        $yearRange->where('year_start', '<=', $yearInt)
+                            ->where('year_end', '>=', $yearInt);
+                    });
+                }
+            });
+        }
     }
 
     /**

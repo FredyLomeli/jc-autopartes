@@ -184,4 +184,29 @@ class PublicCatalogAndSeoTest extends TestCase
         $response->assertSee('Cargar más refacciones', false);
         $response->assertSee('<noscript>', false);
     }
+
+    public function test_catalog_search_supports_combined_words_abbreviations_and_year(): void
+    {
+        // Orden inverso y columnas combinadas: modelo + pieza
+        $combined = $this->get('/refacciones?q=Versa+motor');
+        $combined->assertStatus(200);
+        $combined->assertSee('JC-NIS-001', false);
+        $combined->assertDontSee('JC-CHE-001', false);
+
+        // Abreviatura Chev + modelo
+        $abbr = $this->get('/refacciones?q=Chev+Beat');
+        $abbr->assertStatus(200);
+        $abbr->assertSee('JC-CHE-003', false);
+        $abbr->assertDontSee('JC-NIS-001', false);
+
+        // Búsqueda con año dentro del texto libre (Kicks 2017-2020)
+        $withYear = $this->get('/refacciones?q=Kicks+faro+2018');
+        $withYear->assertStatus(200);
+        $withYear->assertSee('JC-NIS-004', false);
+
+        // El endpoint de Lazy Load también debe respetar la búsqueda combinada
+        $batch = $this->getJson('/refacciones/lote?q=Versa+motor');
+        $batch->assertStatus(200);
+        $this->assertStringContainsString('JC-NIS-001', $batch->json('html'));
+    }
 }

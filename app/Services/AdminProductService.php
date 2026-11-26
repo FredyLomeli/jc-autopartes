@@ -63,14 +63,7 @@ class AdminProductService
 
         $search = trim((string) ($filters['q'] ?? ''));
         if ($search !== '') {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('title', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('part_number', 'like', "%{$search}%")
-                    ->orWhere('mercadolibre_id', 'like', "%{$search}%")
-                    ->orWhere('vehicle_brand', 'like', "%{$search}%")
-                    ->orWhere('vehicle_model', 'like', "%{$search}%");
-            });
+            app(CatalogService::class)->applySearchFilter($query, $search, false);
         }
 
         $category = trim((string) ($filters['category'] ?? ''));
