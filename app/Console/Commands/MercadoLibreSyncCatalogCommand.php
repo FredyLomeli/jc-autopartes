@@ -39,11 +39,18 @@ class MercadoLibreSyncCatalogCommand extends Command
         $this->info('===============================================================');
 
         try {
-            $result = $syncService->sync([
-                'from_raw' => $fromRaw,
-                'fixture' => $fromFixture,
-                'limit' => $limit,
-            ]);
+            if ($fromRaw && ! $fromFixture) {
+                $this->info('Procesando publicaciones crudas desde base de datos en bloques...');
+                $result = $syncService->syncFromRawChunked($limit, 250, function (int $processed, int $created, int $updated) {
+                    $this->line(" -> Procesadas: {$processed} (nuevas: {$created}, actualizadas: {$updated})");
+                });
+            } else {
+                $result = $syncService->sync([
+                    'from_raw' => $fromRaw,
+                    'fixture' => $fromFixture,
+                    'limit' => $limit,
+                ]);
+            }
 
             if ($result['total'] === 0) {
                 $this->warn('No se encontraron publicaciones crudas para procesar. Ejecuta primero «php artisan meli:fetch-raw» o usa «--fixture».');

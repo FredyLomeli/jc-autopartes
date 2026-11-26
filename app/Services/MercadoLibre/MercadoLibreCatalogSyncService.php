@@ -258,8 +258,102 @@ class MercadoLibreCatalogSyncService
         $fromFixture = (bool) ($options['fixture'] ?? false);
         $limit = isset($options['limit']) ? (int) $options['limit'] : null;
 
+        if ($fromRaw && ! $fromFixture) {
+            return $this->syncFromRawChunked($limit);
+        }
+
         $payloads = $this->obtainPayloads($fromRaw, $fromFixture, $limit);
 
+        return $this->processPayloadSlice($payloads, 'completa_estandar');
+    }
+
+    /**
+     * Reprocesa publicaciones crudas de `marketplace_raw_items` por bloques para no saturar memoria RAM.
+     *
+     * @param  callable(int, int, int): void|null  $onBatchProcessed
+     * @return array{total: int, created: int, updated: int, items: array<int, array<string, mixed>>}
+     */
+    public function syncFromRawChunked(?int $limit = null, int $chunkSize = 250, ?callable $onBatchProcessed = null): array
+    {
+        $totalProcessed = 0;
+        $createdCount = 0;
+        $updatedCount = 0;
+        $sampleItems = [];
+
+        $query = MarketplaceRawItem::query()
+            ->where('marketplace', 'mercadolibre')
+            ->orderBy('id');
+
+        $query->chunkById($chunkSize, function ($rows) use (
+            $limit,
+            &$totalProcessed,
+            &$createdCount,
+            &$updatedCount,
+            &$sampleItems,
+            $onBatchProcessed
+        ) {
+            $payloads = [];
+            foreach ($rows as $row) {
+                if ($limit !== null && ($totalProcessed + count($payloads)) >= $limit) {
+                    break;
+                }
+                if (is_array($row->raw_payload)) {
+                    $payloads[] = $row->raw_payload;
+                }
+            }
+
+            if (empty($payloads)) {
+                return false;
+            }
+
+            $batch = $this->processPayloadSlice($payloads, 'from_raw_lotes', updateDiagnosticReport: false);
+            $totalProcessed += $batch['total'];
+            $createdCount += $batch['created'];
+            $updatedCount += $batch['updated'];
+
+            if (count($sampleItems) < 20) {
+                $sampleItems = array_slice(array_merge($sampleItems, $batch['items']), 0, 20);
+            }
+
+            if ($onBatchProcessed !== null) {
+                $onBatchProcessed($totalProcessed, $createdCount, $updatedCount);
+            }
+
+            if ($limit !== null && $totalProcessed >= $limit) {
+                return false;
+            }
+
+            return true;
+        });
+
+        if ($totalProcessed > 0) {
+            $this->generateDiagnosticReport([
+                'processed_count' => $totalProcessed,
+                'created_count' => $createdCount,
+                'updated_count' => $updatedCount,
+                'failed_count' => 0,
+                'total_remote' => $totalProcessed,
+                'items' => array_slice($sampleItems, 0, 5),
+                'errors' => [],
+            ], ['scroll_id' => null, 'offset' => 0, 'mode' => 'from_raw_lotes']);
+
+            app(CatalogService::class)->clearFilterOptionsCache();
+        }
+
+        return [
+            'total' => $totalProcessed,
+            'created' => $createdCount,
+            'updated' => $updatedCount,
+            'items' => $sampleItems,
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $payloads
+     * @return array{total: int, created: int, updated: int, items: array<int, array<string, mixed>>}
+     */
+    private function processPayloadSlice(array $payloads, string $mode, bool $updateDiagnosticReport = true): array
+    {
         $createdCount = 0;
         $updatedCount = 0;
         $processedItems = [];
@@ -329,19 +423,20 @@ class MercadoLibreCatalogSyncService
             }
         }
 
-        // Actualizar reporte de diagnóstico también en sincronización estándar
-        $this->generateDiagnosticReport([
-            'processed_count' => count($processedItems),
-            'created_count' => $createdCount,
-            'updated_count' => $updatedCount,
-            'failed_count' => 0,
-            'total_remote' => count($payloads),
-            'items' => $processedItems,
-            'errors' => [],
-        ], ['scroll_id' => null, 'offset' => 0, 'mode' => 'completa_estandar']);
+        if ($updateDiagnosticReport) {
+            $this->generateDiagnosticReport([
+                'processed_count' => count($processedItems),
+                'created_count' => $createdCount,
+                'updated_count' => $updatedCount,
+                'failed_count' => 0,
+                'total_remote' => count($payloads),
+                'items' => $processedItems,
+                'errors' => [],
+            ], ['scroll_id' => null, 'offset' => 0, 'mode' => $mode]);
 
-        if (! empty($processedItems)) {
-            app(CatalogService::class)->clearFilterOptionsCache();
+            if (! empty($processedItems)) {
+                app(CatalogService::class)->clearFilterOptionsCache();
+            }
         }
 
         return [
