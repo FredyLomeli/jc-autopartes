@@ -129,11 +129,11 @@ class MercadoLibreRealSyncAuditTest extends TestCase
         $products = Product::query()->orderBy('id')->get();
         $this->assertCount(2, $products);
         $this->assertSame('A', $products[0]->condition);
-        $this->assertSame('Colision', $products[0]->category);
+        $this->assertSame('Iluminación', $products[0]->category);
         $this->assertNotSame($products[0]->sku, $products[1]->sku);
 
         // El filtro de categoría público debe encontrar las piezas importadas
-        $this->get(route('catalog.index', ['category' => 'Colision']))
+        $this->get(route('catalog.index', ['category' => 'Iluminación']))
             ->assertStatus(200)
             ->assertSee('Faro Delantero Derecho Nissan Versa 2018')
             ->assertSee('Faro Delantero Izquierdo Nissan Versa 2018');

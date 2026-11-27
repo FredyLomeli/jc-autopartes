@@ -12,6 +12,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    categories: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const activeTab = ref('promotions'); // 'promotions' o 'coupons'
@@ -408,11 +412,10 @@ const deleteCoupon = (coupon) => {
                                 v-model="promoForm.scope_value"
                                 class="w-full rounded-base border-gray-300 text-sm focus:border-primary focus:ring-primary"
                             >
-                                <option value="Motores">Motores</option>
-                                <option value="Transmisiones">Transmisiones</option>
-                                <option value="Colision">Colisión</option>
-                                <option value="Suspension">Suspensión</option>
-                                <option value="Electrico">Eléctrico</option>
+                                <option value="" disabled>Selecciona una categoría...</option>
+                                <option v-for="cat in categories" :key="cat" :value="cat">
+                                    {{ cat }}
+                                </option>
                             </select>
                         </div>
 

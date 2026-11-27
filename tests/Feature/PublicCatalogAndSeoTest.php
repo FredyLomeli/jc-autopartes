@@ -209,4 +209,27 @@ class PublicCatalogAndSeoTest extends TestCase
         $batch->assertStatus(200);
         $this->assertStringContainsString('JC-NIS-001', $batch->json('html'));
     }
+
+    public function test_catalog_shows_ten_categories_and_detail_displays_ml_subcategory(): void
+    {
+        $product = Product::query()->where('sku', 'JC-NIS-001')->firstOrFail();
+        $product->update([
+            'category' => 'Iluminación',
+            'subcategory' => 'Faros Delanteros',
+        ]);
+        app(CatalogService::class)->clearFilterOptionsCache();
+
+        // El catálogo general muestra las 10 categorías oficiales
+        $catalog = $this->get('/refacciones');
+        $catalog->assertStatus(200);
+        foreach (array_keys(config('catalog.categories')) as $categoryName) {
+            $catalog->assertSee($categoryName, false);
+        }
+
+        // La ficha de producto muestra la subcategoría de ML en el detalle
+        $detail = $this->get(route('catalog.show', $product->slug));
+        $detail->assertStatus(200);
+        $detail->assertSee('Subcategoría (Mercado Libre)', false);
+        $detail->assertSee('Faros Delanteros', false);
+    }
 }

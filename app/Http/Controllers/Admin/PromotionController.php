@@ -30,6 +30,7 @@ class PromotionController extends Controller
         return Inertia::render('Admin/Promotions/Index', [
             'promotions' => $promotions,
             'coupons' => $coupons,
+            'categories' => array_keys(config('catalog.categories', [])),
         ]);
     }
 

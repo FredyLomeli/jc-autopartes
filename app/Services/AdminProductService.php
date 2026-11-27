@@ -123,16 +123,7 @@ class AdminProductService
     public function getFilterAndFormOptions(): array
     {
         return [
-            'categories' => [
-                'Motores',
-                'Transmisiones',
-                'Partes Internas',
-                'Suspensión y Dirección',
-                'Colisión y Carrocería',
-                'Eléctrico y Sensores',
-                'Enfriamiento',
-                'Frenos',
-            ],
+            'categories' => array_keys(config('catalog.categories', [])),
             'conditions' => [
                 ['value' => 'A', 'label' => 'Grado A — Excelente estado estético y funcional'],
                 ['value' => 'B', 'label' => 'Grado B — Buen estado funcional con detalles menores'],
@@ -399,12 +390,14 @@ class AdminProductService
 
     private function defaultPlaceholderForCategory(string $category): string
     {
-        return match ($category) {
-            'Motores', 'Partes Internas', 'Enfriamiento' => 'imagenes/placeholders/motor.svg',
-            'Transmisiones' => 'imagenes/placeholders/transmision.svg',
-            'Suspensión y Dirección', 'Frenos' => 'imagenes/placeholders/suspension.svg',
-            'Eléctrico y Sensores' => 'imagenes/placeholders/electrico.svg',
-            default => 'imagenes/placeholders/colision.svg',
-        };
+        $categories = config('catalog.categories', []);
+        $aliases = config('catalog.category_aliases', []);
+        $canonical = $aliases[$category] ?? $category;
+
+        if (isset($categories[$canonical]['placeholder'])) {
+            return (string) $categories[$canonical]['placeholder'];
+        }
+
+        return 'imagenes/placeholders/colision.svg';
     }
 }

@@ -119,4 +119,70 @@ class MercadoLibreRealMapperTest extends TestCase
         $this->assertSame('Trasero', $res3['position']);
         $this->assertSame('OEM-AVEO-96', $res3['oem_number']);
     }
+
+    public function test_mapper_assigns_the_ten_official_categories_and_ml_subcategory(): void
+    {
+        $mapper = new MercadoLibreProductMapper();
+
+        $cases = [
+            [
+                ['id' => 'MLM1', 'title' => 'Faro Delantero Nissan Versa', 'domain_id' => 'MLM-VEHICLE_HEADLIGHTS'],
+                'Iluminación',
+                'Faros Delanteros',
+            ],
+            [
+                ['id' => 'MLM2', 'title' => 'Salpicadera Spark', 'domain_id' => 'MLM-VEHICLE_FENDERS'],
+                'Carrocería y Colisión',
+                'Salpicaderas',
+            ],
+            [
+                ['id' => 'MLM3', 'title' => 'Caliper Audi A1', 'domain_id' => 'MLM-VEHICLE_BRAKE_CALIPERS'],
+                'Frenos',
+                'Calipers',
+            ],
+            [
+                ['id' => 'MLM4', 'title' => 'Amortiguador Tiguan', 'domain_id' => 'MLM-VEHICLE_SHOCK_ABSORBERS'],
+                'Suspensión y Dirección',
+                'Amortiguadores',
+            ],
+            [
+                ['id' => 'MLM5', 'title' => 'Bobina Encendido BMW', 'domain_id' => 'MLM-VEHICLE_IGNITION_COILS'],
+                'Eléctrico y Sensores',
+                'Bobinas de Encendido',
+            ],
+            [
+                ['id' => 'MLM6', 'title' => 'Cinturon Seguridad Mazda 2', 'domain_id' => 'MLM-VEHICLE_SEAT_BELTS'],
+                'Interior y Seguridad',
+                'Cinturones de Seguridad',
+            ],
+            [
+                ['id' => 'MLM7', 'title' => 'Motor 3/4 1.6 Nissan Versa', 'category_id' => 'MLM187514'],
+                'Motores',
+                null,
+            ],
+            [
+                ['id' => 'MLM8', 'title' => 'Transmision Automatica Passat', 'category_id' => 'MLM187515'],
+                'Transmisiones',
+                null,
+            ],
+            [
+                ['id' => 'MLM9', 'title' => 'Compresor A/c Malibu', 'domain_id' => 'MLM-VEHICLE_AC_COMPRESSOR'],
+                'Enfriamiento y Clima (A/C)',
+                null,
+            ],
+            [
+                ['id' => 'MLM10', 'title' => 'Cuerpo Aceleracion Versa', 'domain_id' => 'MLM-VEHICLE_THROTTLE_BODIES'],
+                'Partes de Motor e Inyección',
+                null,
+            ],
+        ];
+
+        foreach ($cases as [$payload, $expectedCategory, $expectedSubcategory]) {
+            $mapped = $mapper->map($payload)['attributes'];
+            $this->assertSame($expectedCategory, $mapped['category'], "Falló categoría para {$payload['title']}");
+            if ($expectedSubcategory !== null) {
+                $this->assertSame($expectedSubcategory, $mapped['subcategory'], "Falló subcategoría para {$payload['title']}");
+            }
+        }
+    }
 }

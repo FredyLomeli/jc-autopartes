@@ -65,9 +65,13 @@ class Promotion extends Model
             return false;
         }
 
+        $aliases = config('catalog.category_aliases', []);
+        $productCat = $aliases[$product->category] ?? $product->category;
+        $scopeCat = $aliases[(string) $this->scope_value] ?? (string) $this->scope_value;
+
         return match ($this->scope_type) {
             'all' => true,
-            'category' => strcasecmp((string) $product->category, (string) $this->scope_value) === 0,
+            'category' => strcasecmp((string) $productCat, $scopeCat) === 0,
             'brand' => strcasecmp((string) $product->vehicle_brand, (string) $this->scope_value) === 0,
             'custom' => is_array($this->product_ids) && in_array($product->id, $this->product_ids),
             default => false,

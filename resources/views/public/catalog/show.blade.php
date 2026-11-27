@@ -100,7 +100,7 @@
                     <div class="space-y-4">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="text-xs font-extrabold uppercase tracking-wider text-primary">
-                                {{ $product->category }} · {{ $product->vehicle_brand }}
+                                {{ $product->category }}@if($product->subcategory) · {{ $product->subcategory }}@endif · {{ $product->vehicle_brand }}
                             </span>
                             <span class="font-mono text-xs font-bold bg-surface px-3 py-1 rounded-base border border-border text-dark">
                                 SKU: {{ $product->sku }}
@@ -272,6 +272,12 @@
                                 <dt class="text-gray-600">Categoría</dt>
                                 <dd class="font-semibold text-dark">{{ $product->category }}</dd>
                             </div>
+                            @if($product->subcategory)
+                                <div class="py-2 flex justify-between gap-4">
+                                    <dt class="text-gray-600">Subcategoría (Mercado Libre)</dt>
+                                    <dd class="font-semibold text-dark text-right">{{ $product->subcategory }}</dd>
+                                </div>
+                            @endif
                             <div class="py-2 flex justify-between">
                                 <dt class="text-gray-600">Marca Vehicular</dt>
                                 <dd class="font-semibold text-dark">{{ $product->vehicle_brand }}</dd>

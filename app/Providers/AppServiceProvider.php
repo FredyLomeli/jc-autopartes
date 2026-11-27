@@ -51,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with([
                 'companySettings' => $settingService->getAll(),
+                'headerSearchCategories' => $filterOptions['categories'] ?? [],
                 'headerSearchBrands' => $filterOptions['brands'] ?? [],
                 'headerSearchYears' => $filterOptions['years'] ?? [],
             ]);

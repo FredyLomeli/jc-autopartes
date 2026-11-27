@@ -130,20 +130,25 @@ class CatalogService
             ->groupBy('category')
             ->pluck('aggregate', 'category');
 
-        $baseCategories = [
-            ['slug' => 'Motores', 'name' => 'Motores Completos y 3/4', 'warranty' => 'Garantía por escrito', 'desc' => 'Motores verificados en compresión y funcionamiento listos para instalar.'],
-            ['slug' => 'Transmisiones', 'name' => 'Transmisiones Automáticas y Estándar', 'warranty' => 'Garantía por escrito', 'desc' => 'Cajas de velocidades automáticas, CVT y manuales revisadas.'],
-            ['slug' => 'Partes Internas', 'name' => 'Cabezas y Partes Internas', 'warranty' => 'Garantía por escrito', 'desc' => 'Cabezas de motor, cigüeñales, árboles de levas y múltiples.'],
-            ['slug' => 'Colision', 'name' => 'Carrocería y Colisión', 'warranty' => 'Garantía por escrito', 'desc' => 'Cofres, puertas, salpicaderas, fascias, faros, calaveras y espejos.'],
-            ['slug' => 'Suspension', 'name' => 'Suspensión y Dirección', 'warranty' => 'Garantía por escrito', 'desc' => 'Horquillas, amortiguadores, cajas de dirección, puentes y mangos.'],
-            ['slug' => 'Electrico', 'name' => 'Sistema Eléctrico y Electrónico', 'warranty' => 'Garantía por escrito', 'desc' => 'Alternadores, marchas, módulos, cuerpos de aceleración y compresores.'],
-        ];
+        $configuredCategories = config('catalog.categories', []);
+        $aliases = config('catalog.category_aliases', []);
 
-        $categories = array_map(function (array $cat) use ($categoryCounts) {
-            $cat['count'] = (int) ($categoryCounts[$cat['slug']] ?? 0);
+        $normalizedCounts = [];
+        foreach ($categoryCounts as $rawName => $cnt) {
+            $canonical = $aliases[$rawName] ?? $rawName;
+            $normalizedCounts[$canonical] = ($normalizedCounts[$canonical] ?? 0) + (int) $cnt;
+        }
 
-            return $cat;
-        }, $baseCategories);
+        $categories = [];
+        foreach ($configuredCategories as $slug => $meta) {
+            $categories[] = [
+                'slug' => $slug,
+                'name' => $meta['name'] ?? $slug,
+                'warranty' => $meta['warranty'] ?? 'Garantía por escrito',
+                'desc' => $meta['desc'] ?? '',
+                'count' => (int) ($normalizedCounts[$slug] ?? 0),
+            ];
+        }
 
         $conditions = [
             'A' => 'Grado A — Excelente estado',
@@ -247,7 +252,15 @@ class CatalogService
         }
 
         if (! empty($filters['category'])) {
-            $query->where('category', (string) $filters['category']);
+            $requestedCategory = (string) $filters['category'];
+            $aliases = config('catalog.category_aliases', []);
+            $canonical = $aliases[$requestedCategory] ?? $requestedCategory;
+            $matchingValues = array_values(array_unique(array_merge(
+                [$requestedCategory, $canonical],
+                array_keys($aliases, $canonical, true)
+            )));
+
+            $query->whereIn('category', $matchingValues);
         }
 
         if (! empty($filters['brand'])) {

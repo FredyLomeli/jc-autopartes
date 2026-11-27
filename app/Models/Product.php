@@ -31,6 +31,7 @@ class Product extends Model
         'part_number',
         'oem_number',
         'category',
+        'subcategory',
         'vehicle_brand',
         'vehicle_model',
         'year_start',
@@ -101,13 +102,21 @@ class Product extends Model
     }
 
     /**
-     * Plazo de garantía oficial según la categoría del artículo (docs/brief_diseno.md).
+     * Plazo de garantía oficial según la categoría del artículo.
      */
     public function warrantyDays(): int
     {
+        $categories = config('catalog.categories', []);
+        $aliases = config('catalog.category_aliases', []);
+        $canonical = $aliases[$this->category] ?? $this->category;
+
+        if (isset($categories[$canonical]['warranty_days'])) {
+            return (int) $categories[$canonical]['warranty_days'];
+        }
+
         return match ($this->category) {
             'Motores', 'Transmisiones' => 30,
-            'Partes Internas' => 15,
+            'Partes Internas', 'Partes de Motor e Inyección' => 15,
             default => 7,
         };
     }

@@ -8,6 +8,8 @@ class MercadoLibreProductMapper
 {
     private readonly float $priceFactor;
 
+    private readonly MercadoLibreCategoryResolver $categoryResolver;
+
     /**
      * Marcas automotrices reconocidas con sus posibles alias en títulos de publicaciones.
      *
@@ -146,9 +148,10 @@ class MercadoLibreProductMapper
         'Giulietta' => 'Alfa Romeo',
     ];
 
-    public function __construct()
+    public function __construct(?MercadoLibreCategoryResolver $categoryResolver = null)
     {
         $this->priceFactor = (float) config('mercadolibre.price_factor', 1.0);
+        $this->categoryResolver = $categoryResolver ?? new MercadoLibreCategoryResolver();
     }
 
     /**
@@ -180,7 +183,13 @@ class MercadoLibreProductMapper
         [$brand, $model] = $this->resolveBrandAndModel($title, $attrBrand, $attrModel);
         [$yearStart, $yearEnd] = $this->extractYears($title, $attrYear);
 
-        $category = $this->mapCategory($payload['category_id'] ?? null, $title);
+        $resolvedCategory = $this->categoryResolver->resolve(
+            $payload['category_id'] ?? null,
+            $payload['domain_id'] ?? null,
+            $title
+        );
+        $category = $resolvedCategory['category'];
+        $subcategory = $resolvedCategory['subcategory'];
         $dimensions = $this->resolveDimensions($payload, $rawAttributes, $category);
 
         [$side, $position] = $this->resolveSideAndPosition($title, $rawAttributes);
@@ -210,6 +219,7 @@ class MercadoLibreProductMapper
             'part_number' => $partNumber !== null ? Str::limit($partNumber, 64, '') : null,
             'oem_number' => $oemNumber !== null ? Str::limit($oemNumber, 64, '') : null,
             'category' => $category,
+            'subcategory' => $subcategory !== null ? Str::limit($subcategory, 120, '') : null,
             'vehicle_brand' => Str::limit($brand, 80, ''),
             'vehicle_model' => Str::limit($model, 100, ''),
             'year_start' => $yearStart,
@@ -284,37 +294,11 @@ class MercadoLibreProductMapper
     }
 
     /**
-     * Mapea el identificador de categoría de Mercado Libre a las categorías del catálogo.
+     * Mapea el identificador de categoría de Mercado Libre a las 10 categorías oficiales del catálogo.
      */
-    public function mapCategory(?string $categoryId, string $title): string
+    public function mapCategory(?string $categoryId, string $title, ?string $domainId = null): string
     {
-        $lowerTitle = mb_strtolower($title);
-
-        if ($categoryId === 'MLM187514' || str_contains($lowerTitle, 'motor')) {
-            return 'Motores';
-        }
-
-        if ($categoryId === 'MLM187515' || str_contains($lowerTitle, 'transmision') || str_contains($lowerTitle, 'transmisión') || str_contains($lowerTitle, 'caja')) {
-            return 'Transmisiones';
-        }
-
-        if (str_contains($lowerTitle, 'cabeza') || str_contains($lowerTitle, 'cigueñal') || str_contains($lowerTitle, 'cigüeñal') || str_contains($lowerTitle, 'arbol') || str_contains($lowerTitle, 'árbol')) {
-            return 'Partes Internas';
-        }
-
-        if ($categoryId === 'MLM187516' || str_contains($lowerTitle, 'faro') || str_contains($lowerTitle, 'calavera') || str_contains($lowerTitle, 'puerta') || str_contains($lowerTitle, 'cofre') || str_contains($lowerTitle, 'fascia') || str_contains($lowerTitle, 'radiador')) {
-            return 'Colision';
-        }
-
-        if ($categoryId === 'MLM187519' || str_contains($lowerTitle, 'direccion') || str_contains($lowerTitle, 'dirección') || str_contains($lowerTitle, 'suspension') || str_contains($lowerTitle, 'suspensión') || str_contains($lowerTitle, 'cremallera') || str_contains($lowerTitle, 'horquilla')) {
-            return 'Suspension';
-        }
-
-        if ($categoryId === 'MLM187517' || $categoryId === 'MLM187518' || str_contains($lowerTitle, 'alternador') || str_contains($lowerTitle, 'marcha') || str_contains($lowerTitle, 'sensor') || str_contains($lowerTitle, 'computadora') || str_contains($lowerTitle, 'compresor') || str_contains($lowerTitle, 'clima') || str_contains($lowerTitle, 'aire')) {
-            return 'Electrico';
-        }
-
-        return 'Colision';
+        return $this->categoryResolver->resolve($categoryId, $domainId, $title)['category'];
     }
 
     /**
@@ -395,9 +379,9 @@ class MercadoLibreProductMapper
         return match ($category) {
             'Motores' => ['height_cm' => 65.0, 'width_cm' => 55.0, 'length_cm' => 70.0, 'weight_kg' => 85.0],
             'Transmisiones' => ['height_cm' => 45.0, 'width_cm' => 45.0, 'length_cm' => 80.0, 'weight_kg' => 60.0],
-            'Partes Internas' => ['height_cm' => 20.0, 'width_cm' => 25.0, 'length_cm' => 50.0, 'weight_kg' => 18.0],
-            'Suspension' => ['height_cm' => 20.0, 'width_cm' => 30.0, 'length_cm' => 100.0, 'weight_kg' => 12.0],
-            'Electrico' => ['height_cm' => 20.0, 'width_cm' => 20.0, 'length_cm' => 25.0, 'weight_kg' => 5.0],
+            'Partes Internas', 'Partes de Motor e Inyección' => ['height_cm' => 20.0, 'width_cm' => 25.0, 'length_cm' => 50.0, 'weight_kg' => 18.0],
+            'Suspension', 'Suspensión y Dirección', 'Frenos' => ['height_cm' => 20.0, 'width_cm' => 30.0, 'length_cm' => 100.0, 'weight_kg' => 12.0],
+            'Electrico', 'Eléctrico y Sensores', 'Enfriamiento y Clima (A/C)' => ['height_cm' => 20.0, 'width_cm' => 20.0, 'length_cm' => 25.0, 'weight_kg' => 5.0],
             default => ['height_cm' => 25.0, 'width_cm' => 30.0, 'length_cm' => 60.0, 'weight_kg' => 6.0],
         };
     }

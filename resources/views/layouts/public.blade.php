@@ -87,14 +87,14 @@
                     <!-- Categoría -->
                     <select
                         name="category"
-                        class="rounded-base border border-white/20 bg-white py-2 px-2.5 text-xs text-dark focus:border-primary focus:ring-1 focus:ring-primary"
+                        class="rounded-base border border-white/20 bg-white py-2 px-2.5 text-xs text-dark focus:border-primary focus:ring-1 focus:ring-primary max-w-[165px]"
                     >
                         <option value="">Categoría</option>
-                        <option value="Motores" {{ request('category') === 'Motores' ? 'selected' : '' }}>Motores</option>
-                        <option value="Transmisiones" {{ request('category') === 'Transmisiones' ? 'selected' : '' }}>Transmisiones</option>
-                        <option value="Colision" {{ request('category') === 'Colision' ? 'selected' : '' }}>Colisión</option>
-                        <option value="Suspension" {{ request('category') === 'Suspension' ? 'selected' : '' }}>Suspensión</option>
-                        <option value="Electrico" {{ request('category') === 'Electrico' ? 'selected' : '' }}>Eléctrico</option>
+                        @foreach($headerSearchCategories ?? [] as $cat)
+                            <option value="{{ $cat['slug'] }}" {{ request('category') === $cat['slug'] ? 'selected' : '' }}>
+                                {{ $cat['name'] }}
+                            </option>
+                        @endforeach
                     </select>
 
                     <!-- Marca -->
