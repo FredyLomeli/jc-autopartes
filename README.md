@@ -11,7 +11,12 @@ Este proyecto combina un **sitio público renderizado en servidor** (Blade + Tai
 - **Fase A0: Andamiaje visual, capa pública, carrito y administración en Laravel** — Concluida al 100% y respaldada por 50 pruebas automatizadas. Ver detalles en [`docs/cierre_fase_A0.md`](docs/cierre_fase_A0.md).
 - **Fase B: Sincronización de Lectura con Mercado Libre y Modelado Definitivo del Catálogo** — Concluida al 100%, certificada con OAuth 2.0 seguro, ingesta cruda, normalización de catálogo automotriz, panel administrativo y comandos de consola. Ver detalles en [`docs/cierre_fase_B.md`](docs/cierre_fase_B.md).
 - **Fase C: Pasarela de Pago con Mercado Pago, Checkout Seguro y Gestión de Pedidos** — Concluida al 100%, con flujo transaccional seguro, decremento atómico de inventario (`lockForUpdate`), Webhook IPN verificado criptográficamente con HMAC-SHA256, correos transaccionales, panel de pedidos en Vue 3 y páginas legales formalizadas. Ver detalles en [`docs/cierre_fase_C.md`](docs/cierre_fase_C.md).
-- **Optimización de Catálogo (10,000+ piezas) y Lazy Load Público** — Implementado en `CatalogService` (consultas agregadas cacheadas 15 min y memoizadas por petición en `getFilterOptions()`), índices compuestos y `FULLTEXT` en `products` (`2026_11_26_000001_add_performance_indexes_to_products_table`), endpoint ligero `GET /refacciones/lote` con `simplePaginate` y carga progresiva en `/refacciones` con Alpine.js (`IntersectionObserver` + botón *«Cargar más refacciones»* + fallback `<noscript>`). Además se añadió bloqueo de seguridad en `tests/TestCase.php` y `gemini.md` para exigir `php artisan optimize:clear` antes de correr PHPUnit.
+- **Optimización de Catálogo (10,000+ piezas) y Lazy Load Público** — Implementado en `CatalogService` (consultas agregadas cacheadas 15 min y memoizadas por petición en `getFilterOptions()`), índices compuestos y `FULLTEXT` en `products` (`2026_11_26_000001_add_performance_indexes_to_products_table`), endpoint ligero `GET /refacciones/lote` con `simplePaginate` y carga progresiva en `/refacciones` con Alpine.js (`IntersectionObserver` + botón *«Cargar más refacciones»* + fallback `<noscript>`). Además se aisló PHPUnit en `phpunit.xml` (`APP_CONFIG_CACHE` / `APP_ROUTES_CACHE` / `APP_EVENTS_CACHE` con `force="true"`) y se añadió bloqueo de seguridad en `tests/TestCase.php` para exigir `sqlite :memory:`.
+- **Buscador Combinado, Hardening de Mapper ML, Identidad Oscura y 10 Categorías Reales (Noviembre 2026)** — Ver resumen operativo vigente y pendientes en [`docs/estado_actual_y_pendientes.md`](docs/estado_actual_y_pendientes.md):
+  - Búsqueda tokenizada (`CatalogService::applySearchFilter()`) compartida con `/admin/articulos`, con abreviaturas automotrices y años en texto libre.
+  - Limpieza de artículos de prueba (`catalog:purge-seeded`), reprocesamiento en bloques `--from-raw` (`syncFromRawChunked()`), años de 2 dígitos, medidas `SELLER_PACKAGE_*`, `SELLER_SKU`, `SIDE_POSITION` y limpieza de marca/modelo.
+  - Barra superior oscura (`bg-dark`) con logotipo ampliado y administrable en `/admin/ajustes` (`POST/DELETE /admin/ajustes/logo`).
+  - Fuente única de las **10 categorías oficiales** en `config/catalog.php`, árbol oficial de ML (`meli:fetch-categories` + `MercadoLibreCategoryResolver`) y columna `subcategory` visible en `/refacciones/{slug}`.
 
 ---
 
@@ -170,31 +175,28 @@ MELI_PRICE_FACTOR=1.0
 
 ### 2. Comandos de Consola Artisan
 ```bash
-# 1. Ingesta de publicaciones crudas en JSON
-php artisan meli:fetch-raw --fixture
+# 1. Descargar árbol oficial de categorías ML desde marketplace_raw_items
+php artisan meli:fetch-categories
 
-# 2. Sincronización y transformación de refacciones al catálogo
-php artisan meli:sync-catalog --fixture
-
-# 3. Sincronización procesando el histórico crudo almacenado
+# 2. Reprocesar publicaciones crudas ya almacenadas en BD (en bloques de 250)
 php artisan meli:sync-catalog --from-raw
+
+# 3. Limpiar artículos semilla sin mercadolibre_id (--dry-run por defecto, --force para ejecutar)
+php artisan catalog:purge-seeded --force
 ```
 
 ### 3. Sincronización desde la Web
-En `/admin/articulos`, los administradores pueden pulsar **«Sincronizar ML»** para importar o refrescar refacciones bajo demanda.
+En `/admin/articulos`, los administradores pueden pulsar **«Sincronizar ML»** para importar o refrescar refacciones por lotes mediante scroll (`POST /admin/integraciones/mercadolibre/sincronizar-lote`).
 
 ---
 
-## 🧪 Pruebas Automatizadas
+## 🧪 Pruebas Automatizadas y Seguridad en Contenedor
 
-El proyecto cuenta con una batería completa de pruebas unitarias y funcionales (Unit y Feature Tests):
+Las pruebas corren exclusivamente en `sqlite :memory:` (aisladas en `phpunit.xml` y protegidas con bloqueo de seguridad en `tests/TestCase.php` para nunca afectar la base de datos MariaDB aunque `php artisan optimize` esté activo):
 
 ```bash
-php artisan test
+docker exec -u www-data -i jc-autopartes-app php artisan test
 ```
 
-**Resultado:**
-- **Fase A0 (50 pruebas / 301 aserciones):** Layout Blade, fuentes de verdad en `StockService` y `PriceService`, filtros de catálogo, canonicals, JSON-LD, carrito de compras, dashboard administrativo y CRUD de artículos.
-- **Fase B (35 pruebas / 139 aserciones):** Flujo OAuth 2.0 y refresh de tokens, ingesta de JSON crudo, mapper con regex de rangos de años y dimensiones de paquetería, servicio desacoplado de sincronización y rutas administrativas.
-- **Total:** **85 pruebas automatizadas — 100% en verde.**
+*(Nota: la suite incluye pruebas nuevas para caché de filtros, Lazy Load `/refacciones/lote`, búsqueda combinada, subida de logotipo, `catalog:purge-seeded`, `meli:sync-catalog --from-raw` y las 10 categorías oficiales. Algunas pruebas antiguas de Fase A0/B que dependían de `database/fixtures/mercadolibre_autoparts_fixture.json` o del diseño previo de portada quedaron desactualizadas tras el rediseño UI y el catálogo real).*
 

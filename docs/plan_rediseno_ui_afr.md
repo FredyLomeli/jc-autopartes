@@ -92,5 +92,7 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 - [x] Slice 2: Header, Footer, Redes, WhatsApp y cintillo de garantía.
 - [x] Slice 3: Home estilo AFR, carrusel y FAQs.
 - [x] Slice 4: Checkout por etapas, cotizador por C.P., cupones y documentos legales en PDF.
-- [x] Optimización de Rendimiento y Lazy Load en Catálogo (`/refacciones` + `GET /refacciones/lote`): caché de filtros (`CatalogService::getFilterOptions()`), índices compuestos/FULLTEXT en `products`, scroll infinito con Alpine.js (`IntersectionObserver` + botón manual + `<noscript>`) y bloqueo preventivo de tests en `TestCase.php`.
+- [x] Optimización de Rendimiento y Lazy Load en Catálogo (`/refacciones` + `GET /refacciones/lote`): caché de filtros (`CatalogService::getFilterOptions()`), índices compuestos/FULLTEXT en `products`, scroll infinito con Alpine.js (`IntersectionObserver` + botón manual + `<noscript>`) y aislamiento/bloqueo preventivo de tests en `phpunit.xml` y `TestCase.php`.
+- [x] Buscador combinado por palabras, abreviaturas y años (`CatalogService::applySearchFilter()`), limpieza de artículos semilla (`catalog:purge-seeded`) y reprocesamiento `--from-raw` en bloques (`syncFromRawChunked()`).
+- [x] Barra superior oscura (`bg-dark`), logotipo ampliado y editable en `/admin/ajustes`, y unificación de las **10 categorías oficiales** (`config/catalog.php`) + subcategoría oficial de ML en ficha (`/refacciones/{slug}`).
 - [ ] Slice 5: Comisión ML y precio tienda.
