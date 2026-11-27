@@ -4,6 +4,10 @@
     $pageDescription = $metaDescription ?? 'Refacciones y autopartes usadas originales en Tepatitlán, Jalisco. Motores, transmisiones, colisión, suspensión y partes eléctricas con garantía oficial por escrito y envíos a todo México.';
     $pageCanonical = $canonicalUrl ?? url()->current();
     $cartCount = collect(session('cart.items', []))->sum('quantity');
+    $customLogoPath = (string) ($companySettings['company_logo_path'] ?? '');
+    $brandLogoUrl = $customLogoPath !== '' && \Illuminate\Support\Facades\Storage::disk('public')->exists($customLogoPath)
+        ? asset('storage/' . ltrim($customLogoPath, '/'))
+        : asset('imagenes/brand/logo.jpg');
 @endphp
 <!DOCTYPE html>
 <html lang="es-MX" class="scroll-smooth">
@@ -29,7 +33,7 @@
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDescription }}">
     <meta property="og:url" content="{{ $pageCanonical }}">
-    <meta property="og:image" content="{{ $ogImage ?? asset('imagenes/brand/logo.jpg') }}">
+    <meta property="og:image" content="{{ $ogImage ?? $brandLogoUrl }}">
 
     <!-- Tipografía Inter -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -42,22 +46,22 @@
 </head>
 <body class="min-h-screen flex flex-col bg-surface text-dark antialiased selection:bg-primary selection:text-white">
 
-    <!-- Encabezado Principal Limpio y Protagónico (Sin barra superior, Logo negro gigante y Buscador estilo AFR) -->
-    <header x-data="{ mobileMenuOpen: false }" class="bg-white border-b border-border sticky top-0 z-40 shadow-sm">
+    <!-- Encabezado Principal Oscuro con Logo Protagónico y Buscador -->
+    <header x-data="{ mobileMenuOpen: false }" class="bg-dark text-white border-b border-white/10 sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-4 sm:py-5 gap-6">
-                <!-- Logotipo Negro Grande (Elegante y Protagónico) con Slogan Oficial -->
+            <div class="flex items-center justify-between py-3 sm:py-4 gap-6">
+                <!-- Logotipo Grande con Fondo Oscuro Integrado y Slogan Oficial -->
                 <a href="{{ url('/') }}" class="flex items-center gap-4 shrink-0 group" aria-label="JC Autopartes Inicio">
                     <img
-                        src="{{ asset('imagenes/brand/logo.jpg') }}"
+                        src="{{ $brandLogoUrl }}"
                         alt="Logo JC Autopartes"
-                        class="h-20 sm:h-24 md:h-28 w-auto object-contain rounded-base transition group-hover:scale-102"
+                        class="h-24 sm:h-28 md:h-32 w-auto object-contain rounded-base transition group-hover:scale-102"
                     >
                     <div class="hidden xl:flex flex-col items-center text-center">
-                        <span class="block text-2xl font-black tracking-tight text-dark leading-none">
+                        <span class="block text-2xl font-black tracking-tight text-white leading-none">
                             JC <span class="text-primary">AUTOPARTES</span>
                         </span>
-                        <span class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-1 text-center w-full">
+                        <span class="block text-[11px] font-bold text-gray-300 uppercase tracking-widest mt-1 text-center w-full">
                             {{ $companySettings['company_badge'] ?? "Todo pa' tu máquina!" }}
                         </span>
                     </div>
@@ -76,14 +80,14 @@
                             name="q"
                             value="{{ request('q') }}"
                             placeholder="Buscar productos por escritura libre..."
-                            class="w-full rounded-base border border-gray-300 bg-gray-50/50 pl-9 pr-3 py-2 text-xs sm:text-sm text-dark placeholder-gray-500 focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary shadow-inner"
+                            class="w-full rounded-base border border-white/20 bg-white pl-9 pr-3 py-2 text-xs sm:text-sm text-dark placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
                         >
                     </div>
 
                     <!-- Categoría -->
                     <select
                         name="category"
-                        class="rounded-base border border-gray-300 bg-gray-50/50 py-2 px-2.5 text-xs text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                        class="rounded-base border border-white/20 bg-white py-2 px-2.5 text-xs text-dark focus:border-primary focus:ring-1 focus:ring-primary"
                     >
                         <option value="">Categoría</option>
                         <option value="Motores" {{ request('category') === 'Motores' ? 'selected' : '' }}>Motores</option>
@@ -96,7 +100,7 @@
                     <!-- Marca -->
                     <select
                         name="brand"
-                        class="rounded-base border border-gray-300 bg-gray-50/50 py-2 px-2.5 text-xs text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                        class="rounded-base border border-white/20 bg-white py-2 px-2.5 text-xs text-dark focus:border-primary focus:ring-1 focus:ring-primary"
                     >
                         <option value="">Marca</option>
                         @foreach($headerSearchBrands as $b)
@@ -107,7 +111,7 @@
                     <!-- Año -->
                     <select
                         name="year"
-                        class="rounded-base border border-gray-300 bg-gray-50/50 py-2 px-2.5 text-xs text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                        class="rounded-base border border-white/20 bg-white py-2 px-2.5 text-xs text-dark focus:border-primary focus:ring-1 focus:ring-primary"
                     >
                         <option value="">Año</option>
                         @foreach($headerSearchYears as $y)
@@ -127,16 +131,16 @@
                 <!-- Carrito de Compras Estilo AFR con texto de Cotización Centrado y Más Grande -->
                 <div class="flex items-center gap-3 sm:gap-4 shrink-0">
                     <a href="{{ url('/carrito') }}" class="group flex flex-col items-center text-center" aria-label="Ver carrito">
-                        <div class="relative inline-flex items-center justify-center p-1 text-dark group-hover:text-primary transition">
+                        <div class="relative inline-flex items-center justify-center p-1 text-white group-hover:text-primary transition">
                             <!-- Ícono de Carrito Rojo Más Grande -->
                             <svg class="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
-                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.4rem] h-5 px-1 rounded-full bg-dark text-white text-[11px] font-black border-2 border-white shadow">
+                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.4rem] h-5 px-1 rounded-full bg-primary text-white text-[11px] font-black border-2 border-dark shadow">
                                 {{ $cartCount }}
                             </span>
                         </div>
-                        <span class="hidden sm:block text-xs font-black uppercase text-dark group-hover:text-primary tracking-tight mt-1 text-center">
+                        <span class="hidden sm:block text-xs font-black uppercase text-white group-hover:text-primary tracking-tight mt-1 text-center">
                             ¡Solicita tu Cotización!
                         </span>
                     </a>
@@ -147,7 +151,7 @@
                         @click="mobileMenuOpen = !mobileMenuOpen"
                         :aria-expanded="mobileMenuOpen.toString()"
                         aria-label="Abrir menú"
-                        class="md:hidden inline-flex items-center justify-center p-2 rounded-base border border-gray-200 text-dark hover:bg-gray-100"
+                        class="md:hidden inline-flex items-center justify-center p-2 rounded-base border border-white/20 text-white hover:bg-white/10"
                     >
                         <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>

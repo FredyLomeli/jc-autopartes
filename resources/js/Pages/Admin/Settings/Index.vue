@@ -12,6 +12,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    brandLogo: {
+        type: Object,
+        default: () => ({ is_custom: false, filename: 'logo.jpg', url: '/imagenes/brand/logo.jpg' }),
+    },
     warrantyPdf: {
         type: Object,
         default: () => ({ exists: false, filename: null, url: null }),
@@ -66,6 +70,33 @@ const legalDocs = [
 ];
 
 const pdfInputRefs = ref({});
+const logoInputRef = ref(null);
+const logoForm = useForm({ logo: null });
+
+const onLogoSelected = (event) => {
+    logoForm.logo = event.target.files[0] || null;
+};
+
+const uploadLogo = () => {
+    logoForm.post(route('admin.settings.logo.upload'), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            logoForm.reset();
+            if (logoInputRef.value) {
+                logoInputRef.value.value = '';
+            }
+        },
+    });
+};
+
+const deleteLogo = () => {
+    if (confirm('¿Restablecer el logotipo predeterminado del sitio público?')) {
+        router.delete(route('admin.settings.logo.destroy'), {
+            preserveScroll: true,
+        });
+    }
+};
 
 const getPdfMeta = (key) => (key === 'warranty' ? props.warrantyPdf : props.privacyPdf);
 
@@ -449,6 +480,82 @@ const disconnectMercadoLibre = () => {
                     </button>
                 </div>
             </form>
+
+            <!-- LOGOTIPO OFICIAL DE LA BARRA SUPERIOR -->
+            <div v-show="activeTab === 'general'" class="bg-white rounded-base border border-gray-200 p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-dark">Logotipo Oficial (Barra Superior)</h2>
+                        <p class="text-xs text-gray-500">
+                            Se muestra en el encabezado oscuro del sitio público. Se recomienda imagen con fondo oscuro o transparente (JPG, PNG, WEBP o SVG).
+                        </p>
+                    </div>
+                    <span
+                        :class="brandLogo.is_custom ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
+                        class="px-2.5 py-1 rounded-full text-xs font-bold self-start sm:self-auto"
+                    >
+                        {{ brandLogo.is_custom ? 'Logotipo Personalizado' : 'Predeterminado' }}
+                    </span>
+                </div>
+
+                <div
+                    v-if="logoForm.recentlySuccessful"
+                    class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-base text-xs font-semibold"
+                >
+                    El logotipo oficial se actualizó correctamente.
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-dark rounded-base border border-gray-800">
+                    <div class="flex items-center gap-4">
+                        <img
+                            :src="brandLogo.url"
+                            alt="Vista previa logotipo JC Autopartes"
+                            class="h-20 w-auto object-contain rounded-base bg-dark"
+                        />
+                        <div class="text-xs text-gray-300 space-y-0.5">
+                            <span class="block font-bold text-white">Vista previa sobre barra superior oscura</span>
+                            <span class="font-mono text-gray-400">{{ brandLogo.filename }}</span>
+                        </div>
+                    </div>
+
+                    <button
+                        v-if="brandLogo.is_custom"
+                        type="button"
+                        @click="deleteLogo"
+                        class="px-3.5 py-2 rounded-base border border-rose-300/30 bg-rose-500/20 hover:bg-rose-500/30 text-xs font-bold text-rose-100 transition self-start sm:self-center"
+                    >
+                        Restablecer Predeterminado
+                    </button>
+                </div>
+
+                <form @submit.prevent="uploadLogo" class="flex flex-col sm:flex-row sm:items-end gap-3 pt-1">
+                    <div class="flex-1">
+                        <label for="company-logo-input" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                            Subir nuevo logotipo (máx. 4 MB)
+                        </label>
+                        <input
+                            id="company-logo-input"
+                            ref="logoInputRef"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/svg+xml,.jpg,.jpeg,.png,.webp,.svg"
+                            @change="onLogoSelected"
+                            class="block w-full text-xs text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-base file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-dark hover:file:bg-gray-200 border border-gray-300 rounded-base bg-white"
+                            required
+                        />
+                        <p v-if="logoForm.errors.logo" class="text-xs text-red-600 font-semibold mt-1">
+                            {{ logoForm.errors.logo }}
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        :disabled="logoForm.processing || !logoForm.logo"
+                        class="px-5 py-2.5 bg-dark hover:bg-gray-800 text-white font-bold text-xs uppercase tracking-wider rounded-base transition disabled:opacity-50 shrink-0"
+                    >
+                        {{ logoForm.processing ? 'Subiendo...' : 'Subir Logotipo' }}
+                    </button>
+                </form>
+            </div>
 
             <!-- DOCUMENTOS LEGALES EN PDF (GARANTÍA Y PRIVACIDAD) -->
             <div v-show="activeTab === 'general'" class="space-y-4">

@@ -101,6 +101,8 @@ Route::prefix('admin')
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
         Route::get('/ajustes', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/ajustes', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/ajustes/logo', [SettingController::class, 'uploadLogo'])->name('settings.logo.upload');
+        Route::delete('/ajustes/logo', [SettingController::class, 'destroyLogo'])->name('settings.logo.destroy');
         Route::post('/ajustes/garantia-pdf', [SettingController::class, 'uploadWarrantyPdf'])->name('settings.warranty-pdf.upload');
         Route::delete('/ajustes/garantia-pdf', [SettingController::class, 'destroyWarrantyPdf'])->name('settings.warranty-pdf.destroy');
         Route::post('/ajustes/privacidad-pdf', [SettingController::class, 'uploadPrivacyPdf'])->name('settings.privacy-pdf.upload');

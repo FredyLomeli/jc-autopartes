@@ -27,6 +27,7 @@ class PublicLayoutTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('imagenes/brand/logo.jpg', false);
+        $response->assertSee('bg-dark text-white', false);
         $response->assertSee('¿Qué nos hace diferentes?', false);
         $response->assertSee('Garantía Escrita', false);
     }

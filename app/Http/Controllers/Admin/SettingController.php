@@ -13,6 +13,8 @@ use Inertia\Response;
 
 class SettingController extends Controller
 {
+    private const LOGO_KEY = 'company_logo_path';
+
     private const WARRANTY_PDF_KEY = 'warranty_policy_pdf_path';
 
     private const PRIVACY_PDF_KEY = 'privacy_policy_pdf_path';
@@ -37,6 +39,7 @@ class SettingController extends Controller
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,
             'structured' => $this->settingService->getAllStructured(),
+            'brandLogo' => $this->buildLogoMeta($settings),
             'warrantyPdf' => $this->buildPdfMeta($settings, self::WARRANTY_PDF_KEY, 'pages.warranty.pdf'),
             'privacyPdf' => $this->buildPdfMeta($settings, self::PRIVACY_PDF_KEY, 'pages.privacy.pdf'),
             'mercadolibreStatus' => [
@@ -57,11 +60,44 @@ class SettingController extends Controller
         ]);
 
         $settings = $validated['settings'];
-        unset($settings[self::WARRANTY_PDF_KEY], $settings[self::PRIVACY_PDF_KEY]);
+        unset($settings[self::LOGO_KEY], $settings[self::WARRANTY_PDF_KEY], $settings[self::PRIVACY_PDF_KEY]);
 
         $this->settingService->updateMany($settings);
 
         return back()->with('success', 'Los datos e información de la empresa se actualizaron correctamente.');
+    }
+
+    /**
+     * Sube o reemplaza el logotipo oficial mostrado en la barra superior del sitio público.
+     */
+    public function uploadLogo(Request $request): RedirectResponse
+    {
+        return $this->uploadSettingFile(
+            $request,
+            'logo',
+            self::LOGO_KEY,
+            'brand',
+            ['required', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            [
+                'logo.required' => 'Selecciona un archivo de imagen para el logotipo.',
+                'logo.mimes' => 'El logotipo debe estar en formato JPG, PNG, WEBP o SVG.',
+                'logo.max' => 'El logotipo no debe superar los 4 MB.',
+            ],
+            'Logotipo oficial de la empresa',
+            'El logotipo oficial se actualizó correctamente.'
+        );
+    }
+
+    /**
+     * Elimina el logotipo personalizado y restaura el logotipo predeterminado.
+     */
+    public function destroyLogo(): RedirectResponse
+    {
+        return $this->destroySettingFile(
+            self::LOGO_KEY,
+            'Logotipo oficial de la empresa',
+            'Se restauró el logotipo predeterminado del sitio.'
+        );
     }
 
     /**
@@ -83,7 +119,7 @@ class SettingController extends Controller
      */
     public function destroyWarrantyPdf(): RedirectResponse
     {
-        return $this->destroyLegalPdf(
+        return $this->destroySettingFile(
             self::WARRANTY_PDF_KEY,
             'Archivo PDF de Política de Garantía',
             'Se eliminó el PDF de la Política de Garantía.'
@@ -109,11 +145,27 @@ class SettingController extends Controller
      */
     public function destroyPrivacyPdf(): RedirectResponse
     {
-        return $this->destroyLegalPdf(
+        return $this->destroySettingFile(
             self::PRIVACY_PDF_KEY,
             'Archivo PDF del Aviso de Privacidad',
             'Se eliminó el PDF del Aviso de Privacidad.'
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     * @return array{is_custom: bool, filename: string, url: string}
+     */
+    private function buildLogoMeta(array $settings): array
+    {
+        $path = (string) ($settings[self::LOGO_KEY] ?? '');
+        $exists = $path !== '' && Storage::disk('public')->exists($path);
+
+        return [
+            'is_custom' => $exists,
+            'filename' => $exists ? basename($path) : 'logo.jpg (predeterminado)',
+            'url' => $exists ? asset('storage/' . ltrim($path, '/')) : asset('imagenes/brand/logo.jpg'),
+        ];
     }
 
     /**
@@ -139,20 +191,44 @@ class SettingController extends Controller
         string $label,
         string $successMessage
     ): RedirectResponse {
-        $request->validate([
-            $inputName => ['required', 'file', 'mimes:pdf', 'max:10240'],
-        ], [
-            "{$inputName}.required" => 'Selecciona un archivo PDF válido.',
-            "{$inputName}.mimes" => 'El archivo debe estar en formato PDF (.pdf).',
-            "{$inputName}.max" => 'El archivo PDF no debe superar los 10 MB.',
-        ]);
+        return $this->uploadSettingFile(
+            $request,
+            $inputName,
+            $settingKey,
+            'legal',
+            ['required', 'file', 'mimes:pdf', 'max:10240'],
+            [
+                "{$inputName}.required" => 'Selecciona un archivo PDF válido.',
+                "{$inputName}.mimes" => 'El archivo debe estar en formato PDF (.pdf).',
+                "{$inputName}.max" => 'El archivo PDF no debe superar los 10 MB.',
+            ],
+            $label,
+            $successMessage
+        );
+    }
+
+    /**
+     * @param  array<int, string>  $rules
+     * @param  array<string, string>  $messages
+     */
+    private function uploadSettingFile(
+        Request $request,
+        string $inputName,
+        string $settingKey,
+        string $directory,
+        array $rules,
+        array $messages,
+        string $label,
+        string $successMessage
+    ): RedirectResponse {
+        $request->validate([$inputName => $rules], $messages);
 
         $currentPath = (string) $this->settingService->get($settingKey, '');
         if ($currentPath !== '' && Storage::disk('public')->exists($currentPath)) {
             Storage::disk('public')->delete($currentPath);
         }
 
-        $storedPath = $request->file($inputName)->store('legal', 'public');
+        $storedPath = $request->file($inputName)->store($directory, 'public');
 
         $this->settingService->set($settingKey, $storedPath, [
             'group' => 'general',
@@ -163,7 +239,7 @@ class SettingController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    private function destroyLegalPdf(string $settingKey, string $label, string $successMessage): RedirectResponse
+    private function destroySettingFile(string $settingKey, string $label, string $successMessage): RedirectResponse
     {
         $currentPath = (string) $this->settingService->get($settingKey, '');
         if ($currentPath !== '' && Storage::disk('public')->exists($currentPath)) {

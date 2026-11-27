@@ -6,6 +6,8 @@ use App\Models\SiteSetting;
 use App\Models\User;
 use App\Services\CompanySettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CompanySettingServiceTest extends TestCase
@@ -52,5 +54,29 @@ class CompanySettingServiceTest extends TestCase
             'key' => 'company_name',
             'value' => 'JC Autopartes Tepatitlán Oficial',
         ]);
+    }
+
+    public function test_authenticated_user_can_upload_and_reset_brand_logo(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $upload = $this->actingAs($user)->post(route('admin.settings.logo.upload'), [
+            'logo' => UploadedFile::fake()->image('jc-logo-oscuro.png', 400, 200),
+        ]);
+
+        $upload->assertSessionHas('success');
+        $storedPath = app(CompanySettingService::class)->get('company_logo_path');
+        $this->assertNotEmpty($storedPath);
+        Storage::disk('public')->assertExists($storedPath);
+
+        // El sitio público debe mostrar el logotipo cargado
+        $this->get('/')->assertStatus(200)->assertSee('storage/' . $storedPath, false);
+
+        // Restablecer al predeterminado
+        $destroy = $this->actingAs($user)->delete(route('admin.settings.logo.destroy'));
+        $destroy->assertSessionHas('success');
+        Storage::disk('public')->assertMissing($storedPath);
+        $this->assertSame('', (string) app(CompanySettingService::class)->get('company_logo_path'));
     }
 }
