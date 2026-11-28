@@ -73,6 +73,13 @@ const handleSyncCompleted = () => {
     >
         <template #actions>
             <div class="flex flex-wrap items-center gap-2">
+                <Link
+                    :href="route('admin.products.dimensions-audit')"
+                    class="bg-white hover:bg-gray-50 text-dark border border-border font-bold px-3.5 py-2 rounded-base text-xs sm:text-sm transition-colors shadow-xs inline-flex items-center gap-1.5"
+                    title="Revisar y corregir pesos y medidas para envíos"
+                >
+                    <span>Auditoría Pesos/Medidas</span>
+                </Link>
                 <button
                     type="button"
                     @click="showSyncModal = true"

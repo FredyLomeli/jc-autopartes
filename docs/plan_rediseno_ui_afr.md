@@ -87,7 +87,7 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 
 ### 🔹 Slice 6: Refinamientos UI/UX Post-Revisión Cliente
 - **Encabezado oscuro compacto:** reducir altura de `<header class="bg-dark">`, logo y carrito sin modificar la barra roja de navegación (`bg-primary`).
-- **Carrusel de banners sin recorte:** `object-contain` con fondo lateral oscuro (sin deformar imágenes) y reubicación de texto/botón CTA (debajo/fuera de la imagen en móvil; orientado a la derecha en escritorio). Se conserva el botón flotante de WhatsApp actual.
+- **Carrusel de banners sin recorte:** ancho completo proporcional (`w-full h-auto block`) sin deformar ni recortar imágenes y reubicación de texto/botón CTA (debajo/fuera de la imagen en móvil; orientado a la derecha al 65% vertical en escritorio). Se conserva el botón flotante de WhatsApp actual.
 - **Fotos de producto completas:** `object-contain` con fondo neutro/blanco en tarjetas, galería principal, miniaturas y relacionados.
 - **Compartir enlace en ficha:** botón para copiar URL y compartir por WhatsApp (pensado también para vista instalada como app/PWA móvil sin barra de URL).
 - **WhatsApp en ficha editable y simplificado:** tomar `contact_whatsapp_1` de `/admin/ajustes` por defecto y simplificar visualmente el botón.
@@ -105,4 +105,4 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 - [x] Buscador combinado por palabras, abreviaturas y años (`CatalogService::applySearchFilter()`), limpieza de artículos semilla (`catalog:purge-seeded`) y reprocesamiento `--from-raw` en bloques (`syncFromRawChunked()`).
 - [x] Barra superior oscura (`bg-dark`), logotipo ampliado y editable en `/admin/ajustes`, y unificación de las **10 categorías oficiales** (`config/catalog.php`) + subcategoría oficial de ML en ficha (`/refacciones/{slug}`).
 - [ ] Slice 5: Precio web neto (`-10%` ML sin IVA + factura opcional), comisiones ML y comparativa de ventas por 10 categorías.
-- [ ] Slice 6: Refinamientos UI/UX post-revisión cliente (header compacto, banner con fondo oscuro, fotos `object-contain`, compartir enlace y WhatsApp editable simplificado).
+- [x] Slice 6: Refinamientos UI/UX post-revisión cliente (header compacto, banner ancho completo sin recorte con CTA al 65% derecho, fotos `object-contain`, compartir enlace y WhatsApp editable simplificado).

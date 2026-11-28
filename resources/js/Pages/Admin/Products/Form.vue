@@ -49,6 +49,7 @@ const form = useForm({
     height_cm: props.product?.height_cm ?? '',
     width_cm: props.product?.width_cm ?? '',
     length_cm: props.product?.length_cm ?? '',
+    dimensions_locked: Boolean(props.product?.dimensions_locked ?? false),
     status: props.product?.status ?? 'published',
     is_featured: Boolean(props.product?.is_featured ?? false),
     photo_urls: initialPhotoUrls,
@@ -616,6 +617,21 @@ const submit = () => {
                                 />
                             </div>
                         </div>
+
+                        <label
+                            v-if="isEdit"
+                            class="flex items-start gap-2.5 pt-2 border-t border-border text-xs text-gray-700 cursor-pointer"
+                        >
+                            <input
+                                v-model="form.dimensions_locked"
+                                type="checkbox"
+                                class="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span>
+                                <strong class="block text-dark">Proteger peso y medidas frente a Mercado Libre</strong>
+                                Evita que futuras sincronizaciones sobrescriban estas medidas verificadas.
+                            </span>
+                        </label>
                     </section>
 
                     <!-- Botón de Guardado -->

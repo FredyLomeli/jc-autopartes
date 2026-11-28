@@ -10,7 +10,9 @@
 ### Módulos operativos en código y probados con datos reales
 1. **Sitio público SSR (Blade + Tailwind + Alpine.js):**
    - Portada con carrusel de banners administrables, marcas, filosofía empresarial, contacto y WhatsApp compacto en 2 líneas.
-   - Encabezado superior oscuro (`bg-dark`) con logotipo ampliado y editable desde `/admin/ajustes`.
+   - Encabezado superior oscuro compacto (`bg-dark`) con logotipo ampliado y editable desde `/admin/ajustes`, manteniendo intacta la barra roja de navegación (`bg-primary`).
+   - Portada con carrusel de banners a ancho completo proporcional (`w-full h-auto block`) sin recorte, CTA móvil debajo de la imagen y CTA en escritorio alineado a la derecha al 65% vertical.
+   - Imágenes completas de productos (`object-contain` sobre fondo blanco) en tarjetas, galería, carrito y checkout; ficha de producto (`/refacciones/{slug}`) con botón WhatsApp simplificado leyendo `contact_whatsapp_1` de `/admin/ajustes` y módulo de **Compartir / Copiar enlace + WhatsApp** para PWA/móvil.
    - Catálogo (`/refacciones`) con **10,027** publicaciones reales sincronizadas desde Mercado Libre (`34,059` fotos), paginación inicial SSR (12 tarjetas) y **Lazy Load** (`GET /refacciones/lote` con `simplePaginate` + `IntersectionObserver` + botón manual + fallback `<noscript>`).
    - Filtros cacheados (`CatalogService::getFilterOptions()`, 15 min) e índices compuestos + `FULLTEXT` en `products` (`2026_11_26_000001_add_performance_indexes_to_products_table`).
    - Buscador combinado por palabras, abreviaturas automotrices y años (`CatalogService::applySearchFilter()`), compartido con `/admin/articulos`.
@@ -23,7 +25,7 @@
    - `MercadoLibreCatalogSyncService::syncFromRawChunked()` procesa `marketplace_raw_items` en bloques de 250.
    - Comando `php artisan catalog:purge-seeded` (`--dry-run` / `--force`) para retirar artículos semilla sin `mercadolibre_id`, protegiendo los referenciados en `order_items`.
 4. **Panel Administrativo (`/admin`, Vue 3 + Inertia.js):**
-   - Artículos (`/admin/articulos`), Pedidos (`/admin/pedidos`), Banners (`/admin/banners`), FAQs (`/admin/faqs`), Promociones y Cupones (`/admin/promociones`), Ajustes de Empresa (`/admin/ajustes` con subida de PDFs legales y logotipo).
+   - Artículos (`/admin/articulos`), **Auditoría de Pesos y Medidas (`/admin/articulos/auditoria-medidas`)** con edición inline, exportación CSV UTF-8, detección de incompletos (`19`) / motores (`<50 kg`) / transmisiones (`<20 kg`) y protección `dimensions_locked` ante futuras sincronizaciones ML (`php artisan catalog:audit-dimensions`), Pedidos (`/admin/pedidos`), Banners (`/admin/banners`), FAQs (`/admin/faqs`), Promociones y Cupones (`/admin/promociones`), Ajustes de Empresa (`/admin/ajustes` con subida de PDFs legales y logotipo).
 5. **Carrito, Promociones, Checkout y Pagos (Fase C):**
    - `StockService` (`lockForUpdate`), `PriceService` (campañas + cupones), checkout en 3 pasos, pasarela `MercadoPagoPaymentGateway` + webhook HMAC-SHA256 y correos transaccionales *(actualmente con credenciales vacías / modo simulación; pendiente implementar flujo OAuth Marketplace de Mercado Pago y validación con correo SMTP real).*
 
@@ -37,12 +39,8 @@
 
 ## 3. Qué Falta por Desarrollar (Pendientes Clave y Acuerdos Cerrados con el Cliente)
 
-### Bloque A — Ajustes de UI/UX Público y Ficha de Producto
-1. **Encabezado oscuro compacto (`layouts/public.blade.php`):** reducir altura de la banda superior (`<header class="bg-dark">`), tamaño del logo y bloque del carrito para evitar que ocupe demasiado alto de pantalla y deje ver el banner desde el primer vistazo. **La barra roja de navegación (`bg-primary`) se mantiene intacta.**
-2. **Carrusel de banners sin recorte y CTA reubicado (`public/home.blade.php`):** evitar recorte/deformación mediante ajuste proporcional (`object-contain`) con fondo oscuro lateral, y reubicar el bloque de título/botón sobre el banner (en móvil fuera/debajo de la imagen para no taparla; en escritorio alineado hacia la derecha). El botón circular flotante de WhatsApp se conserva en su posición actual.
-3. **Imágenes completas en catálogo y ficha (`product-card.blade.php`, `catalog/show.blade.php`):** cambiar `object-cover` por `object-contain` sobre fondo neutro/blanco en tarjetas, galería principal, miniaturas y relacionados para que todas las refacciones se muestren completas dentro del marco.
-4. **Compartir enlace del producto (`catalog/show.blade.php`):** botón de compartir en la ficha con copia rápida del enlace (y *Web Share API* / envío directo por WhatsApp), pensado especialmente para usuarios que instalan la tienda como app móvil/PWA donde no se ve la barra de URL.
-5. **Botón de WhatsApp editable y simplificado en ficha (`CatalogController@show`, `catalog/show.blade.php`):** leer por defecto `contact_whatsapp_1` desde `CompanySettingService` (`/admin/ajustes`) en lugar del número fijo en `config('business')`, con diseño más limpio y directo.
+### Bloque A — Ajustes de UI/UX Público y Ficha de Producto *(Completado — QA Aprobado)*
+- Encabezado oscuro compacto (`layouts/public.blade.php`), banners proporcionales a ancho completo (`w-full h-auto block`) con CTA reubicado en móvil y al 65% derecho en escritorio (`home.blade.php`), fotos `object-contain`, botón de compartir enlace y botón WhatsApp editable (`CompanySettingService` -> `contact_whatsapp_1`) ya implementados y validados.
 
 ### Bloque B — Precios (`-10%` vs. ML sin IVA), Facturación, Mercado Pago OAuth, MSI y Reembolsos
 1. **Regla de precios públicos (`PriceService` + sync ML):** calcular precio web base con la fórmula:
@@ -63,7 +61,7 @@
 
 ### Bloque D — Paquetexpress Real + Auditoría de Medidas/Pesos (Fase D)
 1. **Cotización universal (sin excepciones, incluye motores):** se elimina la excepción previa de ocultar motores/cofres/defensas bajo *«Cotizar por WhatsApp»*; **todos** los artículos cotizan por medidas y peso desde origen **C.P. `47600`** (convenio corporativo Paquetexpress en trámite de accesos Sandbox/Producción). Validar soporte **LTL / tarima (>70 kg)** en la API contratada y definir si se automatiza emisión de guías PDF.
-2. **Reporte auditor de medidas/pesos en `/admin`:** auditoría real sobre los **10,027** productos crudos (`marketplace_raw_items`) detectó **19** artículos sin `SELLER_PACKAGE_*` y **850** artículos en modo `not_specified` donde ML trae pesos genéricos irreales (ej. los motores `Motores` en ML traen `1.75 kg`–`11.48 kg`). Se construirá un reporte/filtro en `/admin` para que el cliente revise y corrija pesos/dimensiones, y una bandera de protección para que futuras sincronizaciones de ML no sobrescriban medidas editadas manualmente.
+2. **Auditoría de medidas/pesos en `/admin` *(Completado)*:** implementado en `/admin/articulos/auditoria-medidas` (`ProductDimensionsAuditService`, `DimensionsAudit.vue`, CSV UTF-8 y `dimensions_locked` en `MercadoLibreCatalogSyncService`). **Pendiente operativo del cliente:** revisar y corregir pesos reales sobre los artículos detectados (`19` sin `SELLER_PACKAGE_*` y motores/cajas con pesos bajos en `not_specified`) antes de conectar Paquetexpress en vivo.
 
 ### Bloque E — Sincronización Bidireccional Continua ML ↔ e-Commerce y Analítica Multicanal (Fase E + Slice 5)
 - **Cron actual (`routes/console.php`):** `SyncMercadoLibreIncrementalJob` está configurado con `limit: 50, autoContinue: false` y aún no corre `schedule:run` en producción.

@@ -191,6 +191,7 @@ class MercadoLibreProductMapper
         $category = $resolvedCategory['category'];
         $subcategory = $resolvedCategory['subcategory'];
         $dimensions = $this->resolveDimensions($payload, $rawAttributes, $category);
+        $dimensionsIncomplete = $this->hasIncompleteSourceDimensions($payload, $rawAttributes);
 
         [$side, $position] = $this->resolveSideAndPosition($title, $rawAttributes);
 
@@ -232,6 +233,7 @@ class MercadoLibreProductMapper
             'width_cm' => $dimensions['width_cm'],
             'length_cm' => $dimensions['length_cm'],
             'weight_kg' => $dimensions['weight_kg'],
+            'dimensions_source_incomplete' => $dimensionsIncomplete,
             'status' => $publishedStatus,
             'is_featured' => false,
             'raw_attributes' => $rawAttributes,
@@ -336,6 +338,36 @@ class MercadoLibreProductMapper
             'length_cm' => max(1.0, $length),
             'weight_kg' => max(0.1, $weightKg),
         ];
+    }
+
+    /**
+     * Indica si la publicación original de Mercado Libre venía sin medidas/peso completos.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, array<string, mixed>>  $rawAttributes
+     */
+    public function hasIncompleteSourceDimensions(array $payload, array $rawAttributes): bool
+    {
+        $shippingDims = $payload['shipping']['dimensions'] ?? null;
+        if (is_string($shippingDims) && str_contains($shippingDims, ',')) {
+            [$linearPart, $weightPart] = explode(',', $shippingDims, 2);
+            $dims = explode('x', $linearPart);
+
+            $validDims = count($dims) === 3
+                && is_numeric($dims[0]) && (float) $dims[0] > 0
+                && is_numeric($dims[1]) && (float) $dims[1] > 0
+                && is_numeric($dims[2]) && (float) $dims[2] > 0;
+            $validWeight = is_numeric($weightPart) && (float) $weightPart > 0;
+
+            return ! ($validDims && $validWeight);
+        }
+
+        $height = $this->parseMeasureToCm($this->extractAttributeValue($rawAttributes, 'SELLER_PACKAGE_HEIGHT'));
+        $width = $this->parseMeasureToCm($this->extractAttributeValue($rawAttributes, 'SELLER_PACKAGE_WIDTH'));
+        $length = $this->parseMeasureToCm($this->extractAttributeValue($rawAttributes, 'SELLER_PACKAGE_LENGTH'));
+        $weight = $this->parseWeightToKg($this->extractAttributeValue($rawAttributes, 'SELLER_PACKAGE_WEIGHT'));
+
+        return $height === null || $width === null || $length === null || $weight === null;
     }
 
     /**

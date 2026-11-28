@@ -182,6 +182,8 @@ class AdminProductService
             'height_cm' => $product->height_cm !== null ? (float) $product->height_cm : null,
             'width_cm' => $product->width_cm !== null ? (float) $product->width_cm : null,
             'length_cm' => $product->length_cm !== null ? (float) $product->length_cm : null,
+            'dimensions_locked' => (bool) $product->dimensions_locked,
+            'dimensions_source_incomplete' => (bool) $product->dimensions_source_incomplete,
             'status' => $product->status,
             'is_featured' => (bool) $product->is_featured,
             'photo_urls' => $product->photos->map(fn (ProductPhoto $photo) => $photo->path)->values()->all(),
@@ -267,6 +269,11 @@ class AdminProductService
                 $product->id
             );
 
+            $dimensionsChanged = $this->dimensionsModified($product, $validated);
+            $dimensionsLocked = array_key_exists('dimensions_locked', $validated)
+                ? ((bool) $validated['dimensions_locked'] || $dimensionsChanged)
+                : ($product->dimensions_locked || $dimensionsChanged);
+
             $product->update([
                 'sku' => strtoupper(trim((string) $validated['sku'])),
                 'mercadolibre_id' => ! empty($validated['mercadolibre_id']) ? trim((string) $validated['mercadolibre_id']) : null,
@@ -288,6 +295,7 @@ class AdminProductService
                 'height_cm' => $validated['height_cm'] ?? null,
                 'width_cm' => $validated['width_cm'] ?? null,
                 'length_cm' => $validated['length_cm'] ?? null,
+                'dimensions_locked' => $dimensionsLocked,
                 'status' => (string) $validated['status'],
                 'is_featured' => (bool) ($validated['is_featured'] ?? false),
             ]);
@@ -399,5 +407,24 @@ class AdminProductService
         }
 
         return 'imagenes/placeholders/colision.svg';
+    }
+
+    /**
+     * Determina si el usuario modificó peso o alguna dimensión en el formulario.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function dimensionsModified(Product $product, array $validated): bool
+    {
+        foreach (['weight_kg', 'height_cm', 'width_cm', 'length_cm'] as $field) {
+            $incoming = isset($validated[$field]) && $validated[$field] !== '' ? round((float) $validated[$field], 2) : null;
+            $current = $product->{$field} !== null ? round((float) $product->{$field}, 2) : null;
+
+            if ($incoming !== $current) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\MercadoLibreSyncController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderModuleController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductDimensionsAuditController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\ProfileController;
@@ -66,6 +67,9 @@ Route::prefix('admin')
 
         // CRUD de Artículos (/admin/articulos)
         Route::get('/articulos', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/articulos/auditoria-medidas', [ProductDimensionsAuditController::class, 'index'])->name('products.dimensions-audit');
+        Route::get('/articulos/auditoria-medidas/exportar', [ProductDimensionsAuditController::class, 'export'])->name('products.dimensions-audit.export');
+        Route::patch('/articulos/{product}/dimensiones', [ProductDimensionsAuditController::class, 'update'])->name('products.dimensions.update');
         Route::get('/articulos/crear', [ProductController::class, 'create'])->name('products.create');
         Route::post('/articulos', [ProductController::class, 'store'])->name('products.store');
         Route::post('/articulos/sincronizar-meli', [ProductController::class, 'syncFromMercadoLibre'])->name('products.sync-meli');

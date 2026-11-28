@@ -165,7 +165,7 @@ class MercadoLibreCatalogSyncService
                     $attributes = $this->resolveUniqueSkuAndSlug($mapped['attributes'], $meliId, $product?->id);
 
                     if ($product) {
-                        $product->update($attributes);
+                        $product->update($this->preserveLockedDimensions($product, $attributes));
                     } else {
                         $product = Product::query()->create($attributes);
                         $isNew = true;
@@ -374,7 +374,7 @@ class MercadoLibreCatalogSyncService
                     $attributes = $this->resolveUniqueSkuAndSlug($mapped['attributes'], $meliId, $product?->id);
 
                     if ($product) {
-                        $product->update($attributes);
+                        $product->update($this->preserveLockedDimensions($product, $attributes));
                     } else {
                         $product = Product::query()->create($attributes);
                         $isNew = true;
@@ -642,6 +642,28 @@ class MercadoLibreCatalogSyncService
             $slugSuffix = '-' . strtolower($suffix);
             $attributes['slug'] = Str::limit($slug, 255 - strlen($slugSuffix), '') . $slugSuffix;
         }
+
+        return $attributes;
+    }
+
+    /**
+     * Evita sobrescribir medidas y peso verificados manualmente cuando el artículo está bloqueado vs ML.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function preserveLockedDimensions(Product $product, array $attributes): array
+    {
+        if (! $product->dimensions_locked) {
+            return $attributes;
+        }
+
+        unset(
+            $attributes['weight_kg'],
+            $attributes['height_cm'],
+            $attributes['width_cm'],
+            $attributes['length_cm'],
+        );
 
         return $attributes;
     }

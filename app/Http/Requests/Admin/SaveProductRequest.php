@@ -60,6 +60,7 @@ class SaveProductRequest extends FormRequest
             'height_cm' => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'width_cm' => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'length_cm' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'dimensions_locked' => ['nullable', 'boolean'],
             'status' => ['required', 'string', Rule::in(['draft', 'published'])],
             'is_featured' => ['nullable', 'boolean'],
             'photo_urls' => ['nullable', 'array', 'max:10'],
