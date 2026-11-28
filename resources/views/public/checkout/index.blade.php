@@ -819,7 +819,7 @@
                 <!-- Desglose Limpio de Importes -->
                 <div class="space-y-2 text-sm pt-1">
                     <div class="flex justify-between text-gray-600">
-                        <span>Subtotal ({{ $cart['totalQuantity'] }} {{ $cart['totalQuantity'] === 1 ? 'pieza' : 'piezas' }})</span>
+                        <span>Subtotal sin IVA ({{ $cart['totalQuantity'] }} {{ $cart['totalQuantity'] === 1 ? 'pieza' : 'piezas' }})</span>
                         <span class="font-bold text-dark">{{ $cart['formattedSubtotal'] }}</span>
                     </div>
 

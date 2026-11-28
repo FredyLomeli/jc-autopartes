@@ -2,6 +2,7 @@
 
 namespace App\Services\MercadoLibre;
 
+use App\Services\PriceService;
 use Illuminate\Support\Str;
 
 class MercadoLibreProductMapper
@@ -9,6 +10,8 @@ class MercadoLibreProductMapper
     private readonly float $priceFactor;
 
     private readonly MercadoLibreCategoryResolver $categoryResolver;
+
+    private readonly PriceService $priceService;
 
     /**
      * Marcas automotrices reconocidas con sus posibles alias en títulos de publicaciones.
@@ -148,10 +151,13 @@ class MercadoLibreProductMapper
         'Giulietta' => 'Alfa Romeo',
     ];
 
-    public function __construct(?MercadoLibreCategoryResolver $categoryResolver = null)
-    {
+    public function __construct(
+        ?MercadoLibreCategoryResolver $categoryResolver = null,
+        ?PriceService $priceService = null,
+    ) {
         $this->priceFactor = (float) config('mercadolibre.price_factor', 1.0);
         $this->categoryResolver = $categoryResolver ?? new MercadoLibreCategoryResolver();
+        $this->priceService = $priceService ?? app(PriceService::class);
     }
 
     /**
@@ -199,8 +205,10 @@ class MercadoLibreProductMapper
         $meliStatus = (string) ($payload['status'] ?? 'active');
         $publishedStatus = ($meliStatus === 'active' && $rawStock > 0) ? 'published' : 'draft';
 
-        $rawPrice = (float) ($payload['price'] ?? 0.0);
-        $webPrice = round($rawPrice * $this->priceFactor, 2);
+        $rawPrice = round((float) ($payload['price'] ?? 0.0), 2);
+        $webPrice = abs($this->priceFactor - 1.0) >= 0.0001
+            ? round($rawPrice * $this->priceFactor, 2)
+            : $this->priceService->calculateWebPriceFromMercadoLibre($rawPrice);
 
         $skuSeed = $sellerSku ?: $partNumber;
         $sku = ! empty($skuSeed)
@@ -228,6 +236,7 @@ class MercadoLibreProductMapper
             'side' => $side !== null ? Str::limit($side, 32, '') : null,
             'position' => $position !== null ? Str::limit($position, 32, '') : null,
             'condition' => 'A',
+            'mercadolibre_price' => $rawPrice > 0 ? $rawPrice : null,
             'description' => $payload['description'] ?? "{$title} compatible con {$brand} {$model} ({$yearStart}–{$yearEnd}). Garantía oficial de JC Autopartes.",
             'height_cm' => $dimensions['height_cm'],
             'width_cm' => $dimensions['width_cm'],

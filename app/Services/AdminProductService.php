@@ -45,6 +45,7 @@ class AdminProductService
         'position',
         'condition',
         'price',
+        'mercadolibre_price',
         'stock',
         'status',
         'is_featured',
@@ -82,6 +83,7 @@ class AdminProductService
             ->withQueryString()
             ->through(function (Product $product) {
                 $unitPrice = $this->priceService->getUnitPrice($product);
+                $mlPrice = $product->mercadolibre_price !== null ? (float) $product->mercadolibre_price : null;
                 $availableStock = $this->stockService->getAvailableStock($product);
 
                 return [
@@ -106,6 +108,8 @@ class AdminProductService
                     'warranty_days' => $product->warrantyDays(),
                     'price' => $unitPrice,
                     'formatted_price' => $this->priceService->format($unitPrice),
+                    'mercadolibre_price' => $mlPrice,
+                    'formatted_mercadolibre_price' => $mlPrice !== null ? $this->priceService->format($mlPrice) : null,
                     'stock' => $availableStock,
                     'has_stock' => $this->stockService->hasStock($product),
                     'status' => $product->status,
@@ -176,6 +180,7 @@ class AdminProductService
             'position' => $product->position ?? '',
             'condition' => $product->condition,
             'price' => $this->priceService->getUnitPrice($product),
+            'mercadolibre_price' => $product->mercadolibre_price !== null ? (float) $product->mercadolibre_price : null,
             'stock' => $this->stockService->getAvailableStock($product),
             'description' => $product->description ?? '',
             'weight_kg' => $product->weight_kg !== null ? (float) $product->weight_kg : null,
@@ -227,6 +232,7 @@ class AdminProductService
                 'position' => ! empty($validated['position']) ? trim((string) $validated['position']) : null,
                 'condition' => (string) $validated['condition'],
                 'price' => 0,
+                'mercadolibre_price' => isset($validated['mercadolibre_price']) && $validated['mercadolibre_price'] !== '' ? round((float) $validated['mercadolibre_price'], 2) : null,
                 'stock' => 0,
                 'description' => $validated['description'] ?? null,
                 'weight_kg' => $validated['weight_kg'] ?? null,
@@ -290,6 +296,9 @@ class AdminProductService
                 'side' => ! empty($validated['side']) ? trim((string) $validated['side']) : null,
                 'position' => ! empty($validated['position']) ? trim((string) $validated['position']) : null,
                 'condition' => (string) $validated['condition'],
+                'mercadolibre_price' => array_key_exists('mercadolibre_price', $validated)
+                    ? ($validated['mercadolibre_price'] !== null && $validated['mercadolibre_price'] !== '' ? round((float) $validated['mercadolibre_price'], 2) : null)
+                    : $product->mercadolibre_price,
                 'description' => $validated['description'] ?? null,
                 'weight_kg' => $validated['weight_kg'] ?? null,
                 'height_cm' => $validated['height_cm'] ?? null,

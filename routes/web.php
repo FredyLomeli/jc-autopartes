@@ -105,6 +105,7 @@ Route::prefix('admin')
         Route::get('/clientes', [PlaceholderModuleController::class, 'customers'])->name('customers.index');
         Route::get('/ajustes', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/ajustes', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/ajustes/recalcular-precios-web', [SettingController::class, 'recalculateWebPrices'])->name('settings.recalculate-web-prices');
         Route::post('/ajustes/logo', [SettingController::class, 'uploadLogo'])->name('settings.logo.upload');
         Route::delete('/ajustes/logo', [SettingController::class, 'destroyLogo'])->name('settings.logo.destroy');
         Route::post('/ajustes/garantia-pdf', [SettingController::class, 'uploadWarrantyPdf'])->name('settings.warranty-pdf.upload');

@@ -54,6 +54,7 @@ class SaveProductRequest extends FormRequest
             'year_end' => ['required', 'integer', 'gte:year_start', 'max:2035'],
             'condition' => ['required', 'string', Rule::in(['A', 'B', 'C', 'used'])],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'mercadolibre_price' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
             'stock' => ['required', 'integer', 'min:0', 'max:99999'],
             'description' => ['nullable', 'string', 'max:10000'],
             'weight_kg' => ['nullable', 'numeric', 'min:0', 'max:5000'],

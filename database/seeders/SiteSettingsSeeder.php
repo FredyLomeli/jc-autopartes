@@ -162,6 +162,13 @@ class SiteSettingsSeeder extends Seeder
                 'type' => 'string',
                 'label' => 'Perfil de Instagram',
             ],
+            [
+                'key' => 'ml_web_discount_percentage',
+                'value' => '10',
+                'group' => 'social',
+                'type' => 'number',
+                'label' => 'Descuento web respecto a Mercado Libre sin IVA (%)',
+            ],
 
             // Filosofía Empresarial 2026 (Juan Carlos Barba)
             [

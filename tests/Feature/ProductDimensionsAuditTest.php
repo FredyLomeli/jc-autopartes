@@ -152,8 +152,9 @@ class ProductDimensionsAuditTest extends TestCase
         app(MercadoLibreCatalogSyncService::class)->syncFromRawChunked();
 
         $product->refresh();
-        // Precio y stock sí actualizan desde ML, pero peso y medidas bloqueados permanecen protegidos
-        $this->assertSame('19500.00', (string) $product->price);
+        // Precio y stock sí actualizan desde ML (precio web neto sin IVA = 19500 / 1.16 * 0.90), pero peso y medidas bloqueados permanecen protegidos
+        $this->assertSame('19500.00', (string) $product->mercadolibre_price);
+        $this->assertSame('15129.31', (string) $product->price);
         $this->assertSame(2, $product->stock);
         $this->assertSame('145.50', (string) $product->weight_kg);
         $this->assertSame('95.00', (string) $product->length_cm);

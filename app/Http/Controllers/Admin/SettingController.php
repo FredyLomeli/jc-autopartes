@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Services\CatalogService;
 use App\Services\CompanySettingService;
 use App\Services\MercadoLibre\MercadoLibreOAuthService;
+use App\Services\PriceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -19,13 +22,19 @@ class SettingController extends Controller
 
     private const PRIVACY_PDF_KEY = 'privacy_policy_pdf_path';
 
+    private const ML_DISCOUNT_KEY = 'ml_web_discount_percentage';
+
     private readonly MercadoLibreOAuthService $meliOAuthService;
+
+    private readonly PriceService $priceService;
 
     public function __construct(
         protected CompanySettingService $settingService,
         ?MercadoLibreOAuthService $meliOAuthService = null,
+        ?PriceService $priceService = null,
     ) {
         $this->meliOAuthService = $meliOAuthService ?? app(MercadoLibreOAuthService::class);
+        $this->priceService = $priceService ?? app(PriceService::class);
     }
 
     /**
@@ -34,7 +43,14 @@ class SettingController extends Controller
     public function index(): Response
     {
         $settings = $this->settingService->getAll();
+        $discountPct = $this->priceService->getMercadoLibreWebDiscountPercentage();
+        $settings[self::ML_DISCOUNT_KEY] = (string) ($settings[self::ML_DISCOUNT_KEY] ?? $discountPct);
         $meliStatus = $this->meliOAuthService->getConnectionStatus();
+
+        $mlSyncedPricingCount = Product::query()
+            ->whereNotNull('mercadolibre_price')
+            ->where('mercadolibre_price', '>', 0)
+            ->count();
 
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,
@@ -42,6 +58,10 @@ class SettingController extends Controller
             'brandLogo' => $this->buildLogoMeta($settings),
             'warrantyPdf' => $this->buildPdfMeta($settings, self::WARRANTY_PDF_KEY, 'pages.warranty.pdf'),
             'privacyPdf' => $this->buildPdfMeta($settings, self::PRIVACY_PDF_KEY, 'pages.privacy.pdf'),
+            'pricingStats' => [
+                'ml_synced_count' => $mlSyncedPricingCount,
+                'discount_percentage' => $discountPct,
+            ],
             'mercadolibreStatus' => [
                 'has_credentials' => (bool) ($meliStatus['has_credentials'] ?? false),
                 'connected' => (bool) ($meliStatus['connected'] ?? false),
@@ -57,14 +77,54 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'settings' => ['required', 'array'],
+            'settings.*' => ['nullable'],
+            'settings.' . self::ML_DISCOUNT_KEY => ['nullable', 'numeric', 'min:0', 'max:90'],
         ]);
 
-        $settings = $validated['settings'];
+        $settings = $validated['settings'] ?? [];
         unset($settings[self::LOGO_KEY], $settings[self::WARRANTY_PDF_KEY], $settings[self::PRIVACY_PDF_KEY]);
+
+        if (array_key_exists(self::ML_DISCOUNT_KEY, $settings)) {
+            $pct = round(max(0.0, min(90.0, (float) ($settings[self::ML_DISCOUNT_KEY] ?? PriceService::DEFAULT_ML_WEB_DISCOUNT_PCT))), 2);
+            $this->settingService->set(self::ML_DISCOUNT_KEY, (string) $pct, [
+                'group' => 'social',
+                'type' => 'number',
+                'label' => 'Descuento web respecto a Mercado Libre sin IVA (%)',
+            ]);
+            unset($settings[self::ML_DISCOUNT_KEY]);
+        }
 
         $this->settingService->updateMany($settings);
 
         return back()->with('success', 'Los datos e información de la empresa se actualizaron correctamente.');
+    }
+
+    /**
+     * Recalcula los precios web sin IVA de todos los artículos con `mercadolibre_price`.
+     */
+    public function recalculateWebPrices(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:90'],
+        ]);
+
+        $pct = array_key_exists('discount_percentage', $validated) && $validated['discount_percentage'] !== null
+            ? round((float) $validated['discount_percentage'], 2)
+            : $this->priceService->getMercadoLibreWebDiscountPercentage();
+
+        $this->settingService->set(self::ML_DISCOUNT_KEY, (string) $pct, [
+            'group' => 'social',
+            'type' => 'number',
+            'label' => 'Descuento web respecto a Mercado Libre sin IVA (%)',
+        ]);
+
+        $result = $this->priceService->recalculateWebPricesFromMercadoLibre($pct);
+        app(CatalogService::class)->clearFilterOptionsCache();
+
+        return back()->with(
+            'success',
+            "Precios recalculados correctamente: {$result['updated']} artículos actualizados con {$result['discount_percentage']}% de descuento sobre precio Mercado Libre sin IVA."
+        );
     }
 
     /**

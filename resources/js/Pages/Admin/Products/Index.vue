@@ -301,7 +301,14 @@ const handleSyncCompleted = () => {
                                 </td>
 
                                 <td class="px-5 py-3.5 text-right font-extrabold text-dark whitespace-nowrap">
-                                    {{ item.formatted_price }}
+                                    <span>{{ item.formatted_price }}</span>
+                                    <span class="block text-[10px] font-semibold text-gray-500">Sin IVA</span>
+                                    <span
+                                        v-if="item.formatted_mercadolibre_price"
+                                        class="block text-[10px] font-medium text-amber-800"
+                                    >
+                                        ML: {{ item.formatted_mercadolibre_price }}
+                                    </span>
                                 </td>
 
                                 <td class="px-5 py-3.5 text-right whitespace-nowrap">

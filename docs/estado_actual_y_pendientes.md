@@ -43,9 +43,9 @@
 - Encabezado oscuro compacto (`layouts/public.blade.php`), banners proporcionales a ancho completo (`w-full h-auto block`) con CTA reubicado en móvil y al 65% derecho en escritorio (`home.blade.php`), fotos `object-contain`, botón de compartir enlace y botón WhatsApp editable (`CompanySettingService` -> `contact_whatsapp_1`) ya implementados y validados.
 
 ### Bloque B — Precios (`-10%` vs. ML sin IVA), Facturación, Mercado Pago OAuth, MSI y Reembolsos
-1. **Regla de precios públicos (`PriceService` + sync ML):** calcular precio web base con la fórmula:
-   $$\text{Precio Web (sin IVA)} = \left(\frac{\text{Precio ML}}{1.16}\right) \times (1 - \text{descuento\_ML})$$
-   con porcentaje de ajuste configurable desde `/admin/ajustes` (`10%` por defecto). Mostrar explícitamente **«Sin IVA / + IVA»** en tarjetas, ficha, carrito y checkout. *(Nota: el cliente debe validar el esquema de mostrar/cobrar IVA solo bajo factura ante su contador por reglas SAT/PROFECO).*
+1. **Regla de precios públicos (`PriceService` + `mercadolibre_price`) *(Completado — QA Aprobado)*:**
+   - Columna `mercadolibre_price` en `products`, fórmula `(Precio ML / 1.16) * (1 - descuento_ML)` (`10%` configurable en `/admin/ajustes` con botón **Recalcular Precios Web**), comando `catalog:recalculate-web-prices` y etiquetas **«Precio sin IVA / + IVA»** en catálogo, ficha, carrito y checkout.
+   - *(Nota: validar ante contador el esquema de mostrar precios sin IVA y cobrar +IVA bajo demanda por reglas SAT/PROFECO).*
 2. **Facturación opcional con +16% IVA en Checkout (`OrderService`, `checkout/index.blade.php`):** agregar checkbox *«Requiero factura (+16% IVA)»*; al marcarse solicita datos fiscales (**RFC, Razón Social, Régimen Fiscal, Uso de CFDI, C.P. fiscal**) y suma **+16% de IVA tanto al subtotal de productos (tras descuentos/cupones) como al costo de envío**.
 3. **Mercado Pago OAuth (Modelo Marketplace) + Control de MSI:**
    - Implementar flujo OAuth 2.0 (`authorization_code` + `offline_access`) desde aplicación Marketplace propia para que el cliente vincule su cuenta desde `/admin/ajustes` sin compartir llaves técnicas.

@@ -24,6 +24,10 @@ const props = defineProps({
         type: Object,
         default: () => ({ exists: false, filename: null, url: null }),
     },
+    pricingStats: {
+        type: Object,
+        default: () => ({ ml_synced_count: 0, discount_percentage: 10 }),
+    },
     mercadolibreStatus: {
         type: Object,
         default: () => ({
@@ -132,6 +136,28 @@ const disconnectMercadoLibre = () => {
             preserveScroll: true,
         });
     }
+};
+
+const recalculateForm = useForm({
+    discount_percentage: props.settings?.ml_web_discount_percentage ?? props.pricingStats?.discount_percentage ?? 10,
+});
+
+const recalculateWebPrices = () => {
+    const pct = Number(form.settings.ml_web_discount_percentage ?? recalculateForm.discount_percentage ?? 10);
+    if (!confirm(`¿Recalcular los precios web sin IVA de todos los artículos sincronizados usando ${pct}% de descuento vs. Mercado Libre?`)) {
+        return;
+    }
+
+    recalculateForm.discount_percentage = pct;
+    recalculateForm.post(route('admin.settings.recalculate-web-prices'), {
+        preserveScroll: true,
+    });
+};
+
+const previewWebPrice = () => {
+    const pct = Math.max(0, Math.min(90, Number(form.settings.ml_web_discount_percentage ?? 10) || 0));
+    const web = (1000 / 1.16) * (1 - pct / 100);
+    return web.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 </script>
 
@@ -640,6 +666,54 @@ const disconnectMercadoLibre = () => {
                             {{ doc.form.processing ? 'Subiendo...' : 'Subir PDF' }}
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- REGLA DE PRECIOS WEB VS MERCADO LIBRE (SIN IVA) -->
+            <div v-show="activeTab === 'social'" class="bg-white rounded-base border border-gray-200 p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-dark">Regla de Precios Web vs. Mercado Libre (Sin IVA)</h2>
+                        <p class="text-xs text-gray-500">
+                            Fórmula aplicada a artículos importados de ML: <code class="font-mono bg-surface px-1 py-0.5 rounded">(Precio ML ÷ 1.16) × (1 - % descuento)</code>. Los precios manuales sin ID de ML no se alteran.
+                        </p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-surface border border-border text-xs font-bold text-dark self-start sm:self-auto">
+                        {{ pricingStats.ml_synced_count }} artículos con precio ML
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-4">
+                        <label for="ml-discount-pct" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                            Descuento Web vs. ML (%)
+                        </label>
+                        <input
+                            id="ml-discount-pct"
+                            v-model="form.settings.ml_web_discount_percentage"
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            max="90"
+                            class="w-full rounded-base border-gray-300 text-sm font-bold focus:border-primary focus:ring-primary"
+                        />
+                    </div>
+
+                    <div class="md:col-span-5 bg-surface border border-border rounded-base px-3.5 py-2.5 text-xs text-gray-700">
+                        <span class="block text-[10px] font-bold uppercase text-gray-500">Ejemplo en vivo ($1,000.00 MXN en ML)</span>
+                        <span class="font-extrabold text-dark text-sm">$1,000.00 ML &rarr; ${{ previewWebPrice() }} MXN (+ IVA)</span>
+                    </div>
+
+                    <div class="md:col-span-3 flex justify-end">
+                        <button
+                            type="button"
+                            @click="recalculateWebPrices"
+                            :disabled="recalculateForm.processing"
+                            class="w-full px-4 py-2.5 bg-dark hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-base shadow-xs transition disabled:opacity-50"
+                        >
+                            {{ recalculateForm.processing ? 'Recalculando...' : 'Recalcular Precios Web' }}
+                        </button>
+                    </div>
                 </div>
             </div>
 

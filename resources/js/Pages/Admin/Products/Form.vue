@@ -43,6 +43,7 @@ const form = useForm({
     position: props.product?.position ?? '',
     condition: props.product?.condition ?? 'A',
     price: props.product?.price ?? 0,
+    mercadolibre_price: props.product?.mercadolibre_price ?? '',
     stock: props.product?.stock ?? 1,
     description: props.product?.description ?? '',
     weight_kg: props.product?.weight_kg ?? '',
@@ -421,7 +422,7 @@ const submit = () => {
 
                         <div>
                             <label for="price" class="block text-xs font-bold uppercase text-gray-700 mb-1">
-                                Precio Unitario (MXN) *
+                                Precio Web Unitario sin IVA (MXN) *
                             </label>
                             <input
                                 id="price"
@@ -433,6 +434,22 @@ const submit = () => {
                                 class="w-full rounded-base border border-border bg-surface px-3.5 py-2 text-base font-extrabold text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
                             />
                             <InputError class="mt-1" :message="form.errors.price" />
+                        </div>
+
+                        <div>
+                            <label for="mercadolibre_price" class="block text-xs font-bold uppercase text-gray-700 mb-1">
+                                Precio Referencia Mercado Libre (MXN, opcional)
+                            </label>
+                            <input
+                                id="mercadolibre_price"
+                                v-model="form.mercadolibre_price"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Solo artículos sincronizados"
+                                class="w-full rounded-base border border-border bg-surface px-3.5 py-1.5 text-sm text-dark focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                            />
+                            <InputError class="mt-1" :message="form.errors.mercadolibre_price" />
                         </div>
 
                         <div>

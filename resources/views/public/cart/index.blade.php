@@ -149,7 +149,7 @@
                             <span class="font-bold text-dark">{{ $cart['totalQuantity'] }} {{ $cart['totalQuantity'] === 1 ? 'pieza' : 'piezas' }}</span>
                         </div>
                         <div class="flex items-center justify-between text-gray-600">
-                            <span>Subtotal de mercancía</span>
+                            <span>Subtotal de mercancía (sin IVA)</span>
                             <span class="font-bold text-dark whitespace-nowrap">{{ $cart['formattedSubtotal'] }}</span>
                         </div>
                         @if(!empty($cart['coupon']))

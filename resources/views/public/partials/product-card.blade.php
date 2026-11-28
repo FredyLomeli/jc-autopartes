@@ -89,9 +89,10 @@
                         <span class="text-[10px] font-extrabold text-primary uppercase">Oferta</span>
                     </div>
                     <span class="block text-base sm:text-lg font-black text-primary whitespace-nowrap leading-none">{{ $formattedPrice }}</span>
+                    <span class="block text-[10px] text-gray-500 font-semibold mt-0.5">+ IVA (si requieres factura)</span>
                 @else
-                    <span class="block text-[10px] text-gray-500 uppercase font-semibold leading-none mb-1">Precio de contado</span>
-                    <span class="block text-base sm:text-lg font-extrabold text-dark whitespace-nowrap leading-none">{{ $formattedPrice }}</span>
+                    <span class="block text-[10px] text-gray-500 uppercase font-semibold leading-none mb-1">Precio sin IVA</span>
+                    <span class="block text-base sm:text-lg font-extrabold text-dark whitespace-nowrap leading-none">{{ $formattedPrice }} <span class="text-[10px] font-semibold text-gray-500">+ IVA</span></span>
                 @endif
             </div>
             <div class="text-right shrink-0">

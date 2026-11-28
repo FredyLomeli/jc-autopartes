@@ -8,13 +8,91 @@ use App\Models\Promotion;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Única fuente de verdad para consultar, calcular, formatear y actualizar precios (`price`),
- * promociones de campaña (directas y simuladas con anclaje) y cupones de descuento.
+ * precios netos web respecto a Mercado Libre, promociones de campaña y cupones de descuento.
  */
 class PriceService
 {
+    public const MEXICO_IVA_RATE = 0.16;
+
+    public const DEFAULT_ML_WEB_DISCOUNT_PCT = 10.0;
+
+    /**
+     * Porcentaje de descuento configurado respecto al precio de Mercado Libre sin IVA.
+     */
+    public function getMercadoLibreWebDiscountPercentage(): float
+    {
+        try {
+            $raw = app(CompanySettingService::class)->get('ml_web_discount_percentage');
+            if ($raw !== null && $raw !== '' && is_numeric($raw)) {
+                return max(0.0, min(90.0, round((float) $raw, 2)));
+            }
+        } catch (Throwable) {
+            // Entorno sin tabla site_settings (pruebas unitarias aisladas)
+        }
+
+        return self::DEFAULT_ML_WEB_DISCOUNT_PCT;
+    }
+
+    /**
+     * Convierte un precio público de Mercado Libre (con IVA y comisión) a precio web neto sin IVA:
+     * (Precio ML / 1.16) * (1 - descuento_ML / 100).
+     */
+    public function calculateWebPriceFromMercadoLibre(float $mlPrice, ?float $discountPercentage = null): float
+    {
+        if ($mlPrice <= 0) {
+            return 0.0;
+        }
+
+        $pct = $discountPercentage !== null
+            ? max(0.0, min(90.0, $discountPercentage))
+            : $this->getMercadoLibreWebDiscountPercentage();
+
+        $netBeforeIva = $mlPrice / (1.0 + self::MEXICO_IVA_RATE);
+
+        return round(max(0.0, $netBeforeIva * (1.0 - ($pct / 100.0))), 2);
+    }
+
+    /**
+     * Recalcula `price` en bloque para todos los artículos con `mercadolibre_price` guardado.
+     *
+     * @return array{updated: int, discount_percentage: float}
+     */
+    public function recalculateWebPricesFromMercadoLibre(?float $discountPercentage = null, int $chunkSize = 500): array
+    {
+        $pct = $discountPercentage !== null
+            ? max(0.0, min(90.0, round($discountPercentage, 2)))
+            : $this->getMercadoLibreWebDiscountPercentage();
+
+        $updated = 0;
+
+        Product::query()
+            ->whereNotNull('mercadolibre_price')
+            ->where('mercadolibre_price', '>', 0)
+            ->select(['id', 'price', 'mercadolibre_price'])
+            ->orderBy('id')
+            ->chunkById($chunkSize, function ($products) use ($pct, &$updated) {
+                DB::transaction(function () use ($products, $pct, &$updated) {
+                    foreach ($products as $product) {
+                        $newPrice = $this->calculateWebPriceFromMercadoLibre((float) $product->mercadolibre_price, $pct);
+                        if (abs((float) $product->price - $newPrice) >= 0.01) {
+                            $product->price = $newPrice;
+                            $product->save();
+                            $updated++;
+                        }
+                    }
+                });
+            });
+
+        return [
+            'updated' => $updated,
+            'discount_percentage' => $pct,
+        ];
+    }
+
     /**
      * Devuelve el precio base real del artículo (sin promociones temporales).
      */

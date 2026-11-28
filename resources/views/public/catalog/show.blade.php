@@ -125,13 +125,16 @@
                                         </span>
                                     </div>
                                     <span class="text-2xl sm:text-3xl font-black text-primary">{{ $promotionDetails['formatted_final_price'] }}</span>
+                                    <span class="text-xs font-bold text-gray-600 ml-1">+ IVA</span>
                                     <span class="block text-xs font-semibold text-emerald-700 mt-1">
                                         ¡Ahorras {{ $promotionDetails['formatted_savings'] }} ({{ $promotionDetails['visible_discount_percentage'] }}% OFF)!
                                     </span>
                                 @else
-                                    <span class="block text-xs font-semibold uppercase text-gray-500">Precio de Contado</span>
+                                    <span class="block text-xs font-semibold uppercase text-gray-500">Precio sin IVA</span>
                                     <span class="text-2xl sm:text-3xl font-extrabold text-dark">{{ $formattedPrice }}</span>
+                                    <span class="text-xs font-bold text-gray-600 ml-1">+ IVA</span>
                                 @endif
+                                <span class="block text-[11px] text-gray-500 mt-1">Precios expresados en MXN sin IVA (+16% si requieres factura).</span>
                             </div>
                             <div class="text-right">
                                 @if($hasStock)
