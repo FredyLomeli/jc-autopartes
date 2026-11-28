@@ -110,7 +110,13 @@ En la mayoría de los servidores cPanel existen dos esquemas habituales:
 APP_NAME="JC Autopartes"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://tudominio.com
+APP_URL=https://jc-autopartes-tepa.com
+
+# Correo transaccional (Gmail SMTP con Contraseña de Aplicación)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_SCHEME=tls
 
 # Base de datos
 DB_CONNECTION=mysql

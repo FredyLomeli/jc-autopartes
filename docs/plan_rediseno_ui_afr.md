@@ -79,9 +79,18 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 - Extensión de `PriceService` para validar y calcular cupones.
 - Rediseño de `checkout.blade.php` con etapas (stepper interactivo).
 
-### 🔹 Slice 5: Comisión Mercado Libre y Precio Web Neto
-- Métodos en `MeliClient` / `MeliSyncService` para consultar comisiones por categoría.
-- Almacenamiento de tarifa de venta y ajuste en `PriceService` para mostrar precio web neto.
+### 🔹 Slice 5: Comisión Mercado Libre, Precio Web Neto (sin IVA + Factura) y Analítica Multicanal
+- Regla oficial definida con el cliente: el precio de MercadoLibre incluye ~10% de comisión ML + 16% IVA, por lo que en la tienda web se calcula:
+  `Precio Web (sin IVA) = (Precio ML / 1.16) * (1 - margen_ML)` (`10%` por defecto configurable en `/admin/ajustes`).
+- Etiquetado explícito **"Sin IVA / + IVA"** en tarjetas, ficha, carrito y checkout; checkbox *"Requiero factura (+16% IVA)"* en checkout con captura de datos fiscales aplicando 16% sobre productos y envío.
+- Consulta de órdenes/comisiones en ML para mostrar en `/admin` indicador de ventas de MercadoLibre y comparativa por las 10 categorías oficiales (`$` y % de participación web vs. ML).
+
+### 🔹 Slice 6: Refinamientos UI/UX Post-Revisión Cliente
+- **Encabezado oscuro compacto:** reducir altura de `<header class="bg-dark">`, logo y carrito sin modificar la barra roja de navegación (`bg-primary`).
+- **Carrusel de banners sin recorte:** `object-contain` con fondo lateral oscuro (sin deformar imágenes) y reubicación de texto/botón CTA (debajo/fuera de la imagen en móvil; orientado a la derecha en escritorio). Se conserva el botón flotante de WhatsApp actual.
+- **Fotos de producto completas:** `object-contain` con fondo neutro/blanco en tarjetas, galería principal, miniaturas y relacionados.
+- **Compartir enlace en ficha:** botón para copiar URL y compartir por WhatsApp (pensado también para vista instalada como app/PWA móvil sin barra de URL).
+- **WhatsApp en ficha editable y simplificado:** tomar `contact_whatsapp_1` de `/admin/ajustes` por defecto y simplificar visualmente el botón.
 
 ---
 
@@ -95,4 +104,5 @@ Para mantener el control y permitir revisiones de QA manual, dividimos en 5 slic
 - [x] Optimización de Rendimiento y Lazy Load en Catálogo (`/refacciones` + `GET /refacciones/lote`): caché de filtros (`CatalogService::getFilterOptions()`), índices compuestos/FULLTEXT en `products`, scroll infinito con Alpine.js (`IntersectionObserver` + botón manual + `<noscript>`) y aislamiento/bloqueo preventivo de tests en `phpunit.xml` y `TestCase.php`.
 - [x] Buscador combinado por palabras, abreviaturas y años (`CatalogService::applySearchFilter()`), limpieza de artículos semilla (`catalog:purge-seeded`) y reprocesamiento `--from-raw` en bloques (`syncFromRawChunked()`).
 - [x] Barra superior oscura (`bg-dark`), logotipo ampliado y editable en `/admin/ajustes`, y unificación de las **10 categorías oficiales** (`config/catalog.php`) + subcategoría oficial de ML en ficha (`/refacciones/{slug}`).
-- [ ] Slice 5: Comisión ML y precio tienda.
+- [ ] Slice 5: Precio web neto (`-10%` ML sin IVA + factura opcional), comisiones ML y comparativa de ventas por 10 categorías.
+- [ ] Slice 6: Refinamientos UI/UX post-revisión cliente (header compacto, banner con fondo oscuro, fotos `object-contain`, compartir enlace y WhatsApp editable simplificado).

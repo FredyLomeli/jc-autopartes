@@ -10,8 +10,9 @@ Reemplaza al plan anterior. Se actualiza al cerrar cada fase.
 | Sitio público | **Blade** + Tailwind + Alpine.js (mejor SEO, sin SSR ni Node en el servidor) |
 | Administración | **Vue 3 + Inertia + Vite** |
 | Catálogo | Se alimenta de **Mercado Libre**: primero una importación de solo lectura para ver qué campos se usan de verdad y después se modela igual |
-| Pagos | **Mercado Pago** (Checkout Pro) |
-| Envíos | Paquetexpress, cotización por código postal y medidas del paquete |
+| Pagos | **Mercado Pago** (Checkout Pro vía OAuth Marketplace, MSI opcional máx. 6 meses, reembolsos parciales/totales desde admin) |
+| Envíos | Paquetexpress, cotización por código postal, medidas y peso para **todos** los productos sin excepción (incluye motores; origen C.P. `47600`) |
+| Dominio y correo | `jc-autopartes-tepa.com` y correo transaccional vía **Gmail SMTP** (App Password) |
 | WhatsApp | **API oficial de Meta (Cloud API)**, un solo número, reparto configurable |
 | Fuera de alcance por ahora | Inventario por pieza, deshuese de vehículos, compras (segunda etapa, si esta funciona) |
 
@@ -45,29 +46,32 @@ A $275 la hora son entre $88,000 y $111,100 MXN. Es un orden de magnitud: lo afi
 2. **Coexistencia** (el mismo número en la app WhatsApp Business y en la API). Según una guía de un proveedor oficial, sincroniza los últimos 6 meses de chats y refleja los mensajes entre ambos. Pero se pierden funciones: llamadas, listas de difusión, respuestas rápidas y etiquetas de la app, catálogo; no soporta grupos. Esa guía indica que se activa a través de un proveedor oficial, así que hay que confirmar si se puede hacer directo sin pagar intermediario.
 3. **Un número nuevo** para el sistema, y el actual sigue como está. Es lo más seguro para empezar.
 
-**Costos de Meta.** La documentación oficial indica que las respuestas libres dentro de la ventana de 24 horas son gratuitas, y que las plantillas de marketing siempre se cobran. Fuera de la ventana solo se puede escribir con plantillas aprobadas. Las tablas de precios por país (en pesos) están en la documentación de Meta y no las pude leer. Lo que la propuesta anterior decía ("a partir del 1 de octubre de 2026 se cobrará por mensaje de servicio, unos $140 por cada 1,000") **venía de guías de terceros y la documentación oficial no lo respalda**. Hay que reescribir esa nota sin fecha ni cifra, y confirmar la tarifa vigente en el administrador de WhatsApp del cliente.
+**Costos de Meta (WhatsApp Business Platform — México `+52`).** Meta factura **por mensaje entregado** según la categoría (consultable en tiempo real en Meta Business Manager): los **mensajes entrantes** de clientes son gratuitos; los mensajes de **Servicio** (respuestas libres en ventana de 24 h) tienen los primeros **1,000 mensajes/mes gratis** por número y posteriormente ~\$0.0085 USD (~\$0.16 MXN); las plantillas de **Utilidad** y **Autenticación** rondan ~\$0.0085 USD (~\$0.16 MXN); y las de **Marketing** ~\$0.0397 USD (~\$0.73 MXN). Además, conversaciones iniciadas desde anuncios *Click-to-WhatsApp* abren una ventana gratuita de 72 horas.
 
 **Reparto de conversaciones (configurable).** Ajuste con tres modos: rotativo entre usuarios activos (por defecto, porque hoy todos hacen de todo), por áreas (opcionales, se crean cuando el cliente las decida) o cola compartida. Cada usuario con estado disponible/no disponible, y el último agente se queda con el cliente recurrente. En modo por áreas, el primer mensaje recibe un menú con botones o lista para elegir área.
 
-**Trámites del cliente:** cuenta de Meta Business verificada, número registrado y plantillas aprobadas para los avisos de pedido. La verificación tarda días, hay que iniciarla en cuanto se autorice el proyecto.
+**Trámites del cliente:** cuenta de Meta Business verificada, número registrado (tentativamente WhatsApp Línea 1) y plantillas aprobadas para los avisos de pedido. La verificación tarda días, hay que iniciarla en cuanto se autorice el proyecto.
 
-## 5. Decisiones y accesos pendientes del cliente
+## 5. Decisiones resueltas y accesos pendientes del cliente
 
-**Negocio**
-- ¿El precio web es igual al de Mercado Libre o menor? En la tienda propia no se paga la comisión de Mercado Libre, así que hay margen para ofrecer un precio distinto.
-- ¿Los precios incluyen IVA?
-- Política de devoluciones y garantía para piezas usadas, aviso de privacidad y términos de compra.
-- Facturación: no está incluida. El checkout debe decir "Para factura, escríbenos por WhatsApp".
-- Recolección en tienda: dirección, horario y quién entrega.
-- Piezas que no van por paquetería (motores, cofres, defensas): se marcan como "cotizar por WhatsApp".
-- Fotos: Mercado Libre probablemente ya tiene fotos reales por publicación; se importan.
+**Negocio (Resueltas con el cliente — Noviembre 2026)**
+- **Precio web vs. Mercado Libre:** los precios de MercadoLibre incluyen ~10% de comisión ML + 16% IVA. La web mostrará precios **sin IVA** aplicando `(Precio ML / 1.16) * (1 - descuento_ML)` (por defecto `10%` configurable en `/admin/ajustes`). *(El cliente debe validar el manejo fiscal de +IVA bajo demanda con su contador por reglas SAT/PROFECO).*
+- **IVA y facturación:** en todo momento los precios mostrados indican **sin IVA**. En el checkout el comprador podrá marcar *"Requiero factura (+16% IVA)"* e ingresar sus datos fiscales, sumando 16% de IVA sobre los **productos y el envío**.
+- **Meses Sin Intereses (MSI):** toggle en `/admin/ajustes` para habilitar/deshabilitar MSI; activo máximo de **3 a 6 MSI** (comisión absorbida por la tienda).
+- **Devoluciones y reembolsos:** gestionables desde `/admin/pedidos` con reembolso parcial o total vía API de Mercado Pago, motivo, decisión de reingreso de stock (y sync a ML) y notificación por correo.
+- **Envíos sin excepción:** **todos** los productos (incluidos motores) cotizan envío por medidas y peso; se integrará un reporte auditor en `/admin` para que el cliente revise artículos con medidas faltantes (`19`) o pesos irreales heredados de ML (`850` en modo `not_specified`).
+- **Sincronización bidireccional ML ↔ e-commerce:** aprobada, incluyendo manejo de artículos en pausa y descuento automático en ML tras venta web.
+- **Analítica:** indicador de ventas en MercadoLibre y comparativa de ventas/porcentaje por las 10 categorías oficiales entre ML y e-commerce.
+- **Recolección en tienda / Origen:** C.P. `47600` (Tepatitlán de Morelos, Jalisco); texto definitivo de domicilio y línea de WhatsApp CRM por confirmar en `/admin/ajustes`.
+- **Políticas legales y fotos:** PDFs de garantía, privacidad y términos editables en `/admin/ajustes`; fotos importadas de ML adaptadas al marco completo (`object-contain`).
 
-**Accesos**
-- Cuenta de **Mercado Pago** (pruebas y producción). Pedirles el costo de meses sin intereses.
-- Cuenta corporativa de **Paquetexpress** con acceso a su API.
-- App de desarrolladores de **Mercado Libre** y autorización de la cuenta del cliente.
-- **Meta Business** verificado y decisión sobre el número.
-- **Hosting y dominio** (versión de PHP, SSH y cron) y código postal de origen de los envíos.
+**Accesos y trámites pendientes**
+- Compra y delegación DNS del dominio **`jc-autopartes-tepa.com`**.
+- Credenciales de **Gmail SMTP** (verificación en 2 pasos + Contraseña de Aplicación).
+- Autorización **OAuth de Mercado Pago** una vez habilitada la app Marketplace (y pruebas en Sandbox).
+- Credenciales Sandbox y Producción de **Paquetexpress API** (convenio en trámite con su ejecutivo).
+- **Meta Business** verificado y confirmación del número único para CRM WhatsApp (tentativamente Línea 1).
+- Acceso de despliegue y cron (`schedule:run`) del hosting definitivo.
 
 ## 6. Riesgos
 
