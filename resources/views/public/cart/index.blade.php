@@ -48,11 +48,11 @@
                     @foreach($items as $item)
                         <div class="bg-white rounded-card border border-border p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
                             <div class="flex items-start gap-4">
-                                <a href="{{ route('catalog.show', $item['slug']) }}" class="w-24 h-20 rounded-base bg-surface border border-border overflow-hidden shrink-0">
+                                <a href="{{ route('catalog.show', $item['slug']) }}" class="w-24 h-20 rounded-base bg-white border border-border overflow-hidden shrink-0">
                                     <img
                                         src="{{ $item['photo_url'] }}"
                                         alt="{{ $item['title'] }}"
-                                        class="w-full h-full object-cover"
+                                        class="w-full h-full object-contain p-0.5"
                                     >
                                 </a>
 

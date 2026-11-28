@@ -57,13 +57,13 @@
                     }"
                     class="lg:col-span-6 space-y-4"
                 >
-                    <div class="aspect-[4/3] rounded-card border border-border bg-surface overflow-hidden relative">
+                    <div class="aspect-[4/3] rounded-card border border-border bg-white overflow-hidden relative">
                         <img
                             :src="activePhoto.url"
                             :alt="activePhoto.alt"
                             src="{{ $photos[0]['url'] }}"
                             alt="{{ $photos[0]['alt'] }}"
-                            class="w-full h-full object-cover bg-white"
+                            class="w-full h-full object-contain bg-white p-2"
                         >
                         <div class="absolute top-3 left-3 z-10 flex gap-1.5 pointer-events-none">
                             <span class="bg-[#111111]/90 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-sm">
@@ -87,7 +87,7 @@
                                     <img
                                         src="{{ $photo['url'] }}"
                                         alt="{{ $photo['alt'] }}"
-                                        class="w-full h-full object-cover rounded-sm"
+                                        class="w-full h-full object-contain bg-white rounded-sm"
                                     >
                                 </button>
                             @endforeach
@@ -213,15 +213,83 @@
                             </button>
                         @endif
 
-                        <!-- Botón Directo de WhatsApp con el nombre y SKU de la pieza -->
+                        @php
+                            $waLabel = $whatsappDisplay ?? ($companySettings['contact_whatsapp_1'] ?? $business['whatsapp_display'] ?? '378 145 5737');
+                            $shareUrl = route('catalog.show', $product->slug);
+                            $shareText = "Mira esta refacción en JC Autopartes: {$product->title} ({$product->sku}) — {$shareUrl}";
+                        @endphp
+
+                        <!-- Botón Directo y Simplificado de WhatsApp (Número Editable desde Ajustes) -->
                         <a
                             href="{{ $whatsappUrl }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="w-full bg-whatsapp hover:brightness-95 text-white font-extrabold py-3 px-6 rounded-base text-sm transition-colors inline-flex items-center justify-center gap-2 shadow-sm"
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-base text-sm transition-colors inline-flex items-center justify-center gap-2 shadow-xs"
                         >
-                            <span>Preguntar por esta pieza en WhatsApp ({{ $business['whatsapp_display'] }})</span>
+                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                            </svg>
+                            <span>Consultar por WhatsApp · {{ $waLabel }}</span>
                         </a>
+
+                        <!-- Compartir Enlace del Producto (útil en App Móvil / PWA y Escritorio) -->
+                        <div
+                            x-data="{
+                                copied: false,
+                                shareUrl: @js($shareUrl),
+                                shareTitle: @js($product->title),
+                                async shareProduct() {
+                                    if (navigator.share) {
+                                        try {
+                                            await navigator.share({ title: this.shareTitle, url: this.shareUrl });
+                                            return;
+                                        } catch (e) {}
+                                    }
+                                    await this.copyLink();
+                                },
+                                async copyLink() {
+                                    try {
+                                        await navigator.clipboard.writeText(this.shareUrl);
+                                    } catch (e) {
+                                        const el = document.createElement('textarea');
+                                        el.value = this.shareUrl;
+                                        el.setAttribute('readonly', '');
+                                        el.style.position = 'absolute';
+                                        el.style.left = '-9999px';
+                                        document.body.appendChild(el);
+                                        el.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(el);
+                                    }
+                                    this.copied = true;
+                                    setTimeout(() => this.copied = false, 2500);
+                                }
+                            }"
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                        >
+                            <button
+                                type="button"
+                                @click="shareProduct()"
+                                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-base border border-border bg-surface hover:border-dark text-xs font-bold text-dark transition-colors"
+                            >
+                                <svg class="w-4 h-4 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                </svg>
+                                <span x-text="copied ? '¡Enlace copiado!' : 'Copiar / Compartir enlace'">Copiar / Compartir enlace</span>
+                            </button>
+
+                            <a
+                                href="https://wa.me/?text={{ urlencode($shareText) }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-base border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-800 transition-colors"
+                            >
+                                <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                </svg>
+                                <span>Compartir por WhatsApp</span>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Sello de Garantía Oficial y Envío -->

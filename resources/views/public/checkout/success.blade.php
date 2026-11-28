@@ -85,7 +85,7 @@
                             <div class="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white hover:bg-surface/50 transition-colors">
                                 <div class="flex items-center gap-3">
                                     @if($item->photo_url)
-                                        <img src="{{ $item->photo_url }}" alt="{{ $item->product_title }}" class="w-14 h-14 rounded object-cover border border-border shrink-0">
+                                        <img src="{{ $item->photo_url }}" alt="{{ $item->product_title }}" class="w-14 h-14 rounded object-contain bg-white p-0.5 border border-border shrink-0">
                                     @else
                                         <div class="w-14 h-14 rounded bg-gray-100 border border-border flex items-center justify-center text-gray-400 shrink-0">
                                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -37,10 +37,56 @@ class CompanySettingService
     /**
      * Obtiene un valor individual con valor por defecto.
      */
+    /**
+     * Obtiene un valor individual con valor por defecto.
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         $all = $this->getAll();
+
         return $all[$key] ?? $default;
+    }
+
+    /**
+     * Obtiene el número de WhatsApp principal visible en tienda (editable en /admin/ajustes).
+     */
+    public function getPrimaryWhatsappDisplay(): string
+    {
+        $configured = trim((string) $this->get('contact_whatsapp_1', ''));
+
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        return (string) config('business.whatsapp_display', '378 145 5737');
+    }
+
+    /**
+     * Obtiene el número de WhatsApp principal normalizado para URL wa.me (con lada 52).
+     */
+    public function getPrimaryWhatsappNumber(): string
+    {
+        $digits = preg_replace('/\D+/', '', $this->getPrimaryWhatsappDisplay()) ?? '';
+
+        if ($digits === '') {
+            $digits = preg_replace('/\D+/', '', (string) config('business.whatsapp_number', '523781455737')) ?? '523781455737';
+        }
+
+        return strlen($digits) === 10 ? '52' . $digits : $digits;
+    }
+
+    /**
+     * Construye un enlace directo wa.me usando la línea de WhatsApp editable en Ajustes.
+     */
+    public function buildPrimaryWhatsappUrl(?string $message = null): string
+    {
+        $url = 'https://wa.me/' . $this->getPrimaryWhatsappNumber();
+
+        if ($message !== null && $message !== '') {
+            $url .= '?text=' . urlencode($message);
+        }
+
+        return $url;
     }
 
     /**

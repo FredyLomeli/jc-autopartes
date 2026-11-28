@@ -320,7 +320,7 @@
                     @foreach($items as $item)
                         <li class="py-2.5 flex items-center justify-between gap-4 text-sm">
                             <div class="flex items-center gap-3 min-w-0">
-                                <img src="{{ $item['photo_url'] }}" alt="{{ $item['title'] }}" class="w-12 h-12 rounded-base object-cover border border-border bg-white shrink-0">
+                                <img src="{{ $item['photo_url'] }}" alt="{{ $item['title'] }}" class="w-12 h-12 rounded-base object-contain p-0.5 border border-border bg-white shrink-0">
                                 <div class="min-w-0">
                                     <p class="font-bold text-dark truncate">{{ $item['title'] }}</p>
                                     <p class="text-xs text-gray-500">Cant: {{ $item['quantity'] }} · SKU: {{ $item['sku'] }}</p>

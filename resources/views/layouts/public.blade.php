@@ -49,19 +49,19 @@
     <!-- Encabezado Principal Oscuro con Logo Protagónico y Buscador -->
     <header x-data="{ mobileMenuOpen: false }" class="bg-dark text-white border-b border-white/10 sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-3 sm:py-4 gap-6">
-                <!-- Logotipo Grande con Fondo Oscuro Integrado y Slogan Oficial -->
-                <a href="{{ url('/') }}" class="flex items-center gap-4 shrink-0 group" aria-label="JC Autopartes Inicio">
+            <div class="flex items-center justify-between py-1.5 sm:py-2 gap-4">
+                <!-- Logotipo Compacto con Fondo Oscuro Integrado y Slogan Oficial -->
+                <a href="{{ url('/') }}" class="flex items-center gap-3 shrink-0 group" aria-label="JC Autopartes Inicio">
                     <img
                         src="{{ $brandLogoUrl }}"
                         alt="Logo JC Autopartes"
-                        class="h-24 sm:h-28 md:h-32 w-auto object-contain rounded-base transition group-hover:scale-102"
+                        class="h-12 sm:h-16 md:h-20 w-auto object-contain rounded-base transition group-hover:scale-102"
                     >
                     <div class="hidden xl:flex flex-col items-center text-center">
-                        <span class="block text-2xl font-black tracking-tight text-white leading-none">
+                        <span class="block text-lg sm:text-xl font-black tracking-tight text-white leading-none">
                             JC <span class="text-primary">AUTOPARTES</span>
                         </span>
-                        <span class="block text-[11px] font-bold text-gray-300 uppercase tracking-widest mt-1 text-center w-full">
+                        <span class="block text-[10px] font-bold text-gray-300 uppercase tracking-widest mt-0.5 text-center w-full">
                             {{ $companySettings['company_badge'] ?? "Todo pa' tu máquina!" }}
                         </span>
                     </div>
@@ -128,19 +128,18 @@
                     </button>
                 </form>
 
-                <!-- Carrito de Compras Estilo AFR con texto de Cotización Centrado y Más Grande -->
-                <div class="flex items-center gap-3 sm:gap-4 shrink-0">
+                <!-- Carrito de Compras Compacto -->
+                <div class="flex items-center gap-3 shrink-0">
                     <a href="{{ url('/carrito') }}" class="group flex flex-col items-center text-center" aria-label="Ver carrito">
-                        <div class="relative inline-flex items-center justify-center p-1 text-white group-hover:text-primary transition">
-                            <!-- Ícono de Carrito Rojo Más Grande -->
-                            <svg class="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <div class="relative inline-flex items-center justify-center p-0.5 text-white group-hover:text-primary transition">
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
-                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.4rem] h-5 px-1 rounded-full bg-primary text-white text-[11px] font-black border-2 border-dark shadow">
+                            <span class="absolute -top-1 -right-1.5 inline-flex items-center justify-center min-w-[1.2rem] h-4 px-1 rounded-full bg-primary text-white text-[10px] font-black border-2 border-dark shadow">
                                 {{ $cartCount }}
                             </span>
                         </div>
-                        <span class="hidden sm:block text-xs font-black uppercase text-white group-hover:text-primary tracking-tight mt-1 text-center">
+                        <span class="hidden sm:block text-[11px] font-black uppercase text-white group-hover:text-primary tracking-tight mt-0.5 text-center leading-none">
                             ¡Solicita tu Cotización!
                         </span>
                     </a>
@@ -151,7 +150,7 @@
                         @click="mobileMenuOpen = !mobileMenuOpen"
                         :aria-expanded="mobileMenuOpen.toString()"
                         aria-label="Abrir menú"
-                        class="md:hidden inline-flex items-center justify-center p-2 rounded-base border border-white/20 text-white hover:bg-white/10"
+                        class="md:hidden inline-flex items-center justify-center p-1.5 rounded-base border border-white/20 text-white hover:bg-white/10"
                     >
                         <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
@@ -164,7 +163,7 @@
             </div>
 
             <!-- Buscador Móvil -->
-            <div class="md:hidden pb-3">
+            <div class="md:hidden pb-2">
                 <form action="{{ url('/refacciones') }}" method="GET" role="search" class="flex gap-1">
                     <input
                         type="search"

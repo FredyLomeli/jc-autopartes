@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Services\CatalogService;
+use App\Services\CompanySettingService;
 use App\Services\PriceService;
 use App\Services\StockService;
 use Illuminate\Contracts\View\View;
@@ -14,11 +15,16 @@ class CatalogController extends Controller
 {
     private const PER_PAGE = 12;
 
+    private readonly CompanySettingService $settingService;
+
     public function __construct(
         private readonly CatalogService $catalogService,
         private readonly PriceService $priceService,
         private readonly StockService $stockService,
-    ) {}
+        ?CompanySettingService $settingService = null,
+    ) {
+        $this->settingService = $settingService ?? app(CompanySettingService::class);
+    }
 
     public function index(Request $request): View
     {
@@ -95,9 +101,9 @@ class CatalogController extends Controller
         $availableStock = $this->stockService->getAvailableStock($product);
         $hasStock = $this->stockService->hasStock($product, 1);
 
-        $whatsappNumber = config('business.whatsapp_number', '523331665290');
+        $whatsappDisplay = $this->settingService->getPrimaryWhatsappDisplay();
         $whatsappMessage = "Hola JC Autopartes, me interesa la pieza: {$product->title} (SKU: {$product->sku}) para {$product->vehicle_brand} {$product->vehicle_model} {$product->year_start}-{$product->year_end}. ¿Sigue disponible?";
-        $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($whatsappMessage);
+        $whatsappUrl = $this->settingService->buildPrimaryWhatsappUrl($whatsappMessage);
 
         $promotionDetails = $this->priceService->getPromotionDetails($product);
 
@@ -110,6 +116,7 @@ class CatalogController extends Controller
             'availableStock' => $availableStock,
             'hasStock' => $hasStock,
             'whatsappUrl' => $whatsappUrl,
+            'whatsappDisplay' => $whatsappDisplay,
             'jsonLd' => $jsonLd,
             'priceService' => $this->priceService,
             'stockService' => $this->stockService,

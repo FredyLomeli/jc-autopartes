@@ -58,44 +58,42 @@
             @mouseleave="startAutoplay()"
             class="relative w-full bg-dark overflow-hidden select-none border-b border-gray-100 shadow-sm"
         >
-            <div class="relative w-full aspect-[16/9] max-h-[640px] overflow-hidden">
+            <div class="relative w-full overflow-hidden bg-dark">
                 @foreach($banners as $index => $banner)
                     <div
                         x-show="currentSlide === {{ $index }}"
-                        x-transition:enter="transition ease-out duration-700"
-                        x-transition:enter-start="opacity-0 scale-98"
-                        x-transition:enter-end="opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-500"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                        class="absolute inset-0 w-full h-full"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        class="relative w-full"
                         style="{{ $index === 0 ? '' : 'display: none;' }}"
                     >
                         <img
                             src="{{ $banner->image_url }}"
                             alt="{{ $banner->title ?? 'JC Autopartes' }}"
-                            class="w-full h-full object-cover object-center"
+                            class="w-full h-auto block"
                         >
 
                         @if($banner->title || $banner->button_text)
-                            <div class="absolute inset-0 bg-gradient-to-r from-dark/70 via-dark/30 to-transparent flex items-center">
-                                <div class="max-w-7xl mx-auto px-6 sm:px-12 w-full">
-                                    <div class="max-w-xl text-white space-y-3">
+                            <!-- Escritorio: bloque orientado a la derecha, ubicado al 65% vertical de la imagen -->
+                            <div class="hidden md:block absolute inset-0 bg-gradient-to-l from-dark/75 via-dark/25 to-transparent pointer-events-none">
+                                <div class="max-w-7xl mx-auto px-10 lg:px-14 w-full h-full relative">
+                                    <div class="absolute right-10 lg:right-14 top-[65%] -translate-y-1/2 max-w-md text-white text-right space-y-3 pointer-events-auto">
                                         @if($banner->title)
-                                            <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight drop-shadow-md">
+                                            <h2 class="text-3xl lg:text-4xl font-black tracking-tight leading-tight drop-shadow-md">
                                                 {{ $banner->title }}
                                             </h2>
                                         @endif
                                         @if($banner->subtitle)
-                                            <p class="text-xs sm:text-base md:text-lg text-gray-200 drop-shadow">
+                                            <p class="text-sm lg:text-base text-gray-200 drop-shadow">
                                                 {{ $banner->subtitle }}
                                             </p>
                                         @endif
                                         @if($banner->button_text && $banner->button_url)
-                                            <div class="pt-2">
+                                            <div class="pt-1.5 flex justify-end">
                                                 <a
                                                     href="{{ $banner->button_url }}"
-                                                    class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-base transition shadow-lg"
+                                                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-black text-xs lg:text-sm uppercase tracking-wider rounded-base transition shadow-lg"
                                                 >
                                                     <span>{{ $banner->button_text }}</span>
                                                     <span>→</span>
@@ -108,38 +106,73 @@
                         @endif
                     </div>
                 @endforeach
+
+                @if($banners->count() > 1)
+                    <button
+                        type="button"
+                        @click="prev()"
+                        class="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-dark/45 hover:bg-primary text-white flex items-center justify-center transition backdrop-blur-sm shadow-md"
+                        aria-label="Banner anterior"
+                    >
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="next()"
+                        class="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-dark/45 hover:bg-primary text-white flex items-center justify-center transition backdrop-blur-sm shadow-md"
+                        aria-label="Siguiente banner"
+                    >
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+
+                    <div class="hidden md:flex absolute bottom-3 left-0 right-0 z-20 items-center justify-center gap-2">
+                        @foreach($banners as $index => $banner)
+                            <button
+                                type="button"
+                                @click="goTo({{ $index }})"
+                                :class="currentSlide === {{ $index }} ? 'w-8 bg-primary' : 'w-2.5 bg-white/50 hover:bg-white'"
+                                class="h-2.5 rounded-full transition-all duration-300"
+                                aria-label="Ir al banner {{ $index + 1 }}"
+                            ></button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
-            @if($banners->count() > 1)
-                <button
-                    type="button"
-                    @click="prev()"
-                    class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark/40 hover:bg-primary text-white flex items-center justify-center transition backdrop-blur-sm shadow-md"
-                    aria-label="Banner anterior"
-                >
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <button
-                    type="button"
-                    @click="next()"
-                    class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark/40 hover:bg-primary text-white flex items-center justify-center transition backdrop-blur-sm shadow-md"
-                    aria-label="Siguiente banner"
-                >
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                </button>
-
-                <div class="absolute bottom-4 left-0 right-0 z-20 flex items-center justify-center gap-2">
-                    @foreach($banners as $index => $banner)
-                        <button
-                            type="button"
-                            @click="goTo({{ $index }})"
-                            :class="currentSlide === {{ $index }} ? 'w-8 bg-primary' : 'w-2.5 bg-white/50 hover:bg-white'"
-                            class="h-2.5 rounded-full transition-all duration-300"
-                            aria-label="Ir al banner {{ $index + 1 }}"
-                        ></button>
-                    @endforeach
-                </div>
-            @endif
+            <!-- Móvil: texto y botón CTA fuera de la imagen para no cubrir el banner -->
+            @foreach($banners as $index => $banner)
+                @if($banner->title || $banner->subtitle || ($banner->button_text && $banner->button_url))
+                    <div
+                        x-show="currentSlide === {{ $index }}"
+                        class="md:hidden bg-dark text-white px-4 py-3.5 border-t border-white/10"
+                        style="{{ $index === 0 ? '' : 'display: none;' }}"
+                    >
+                        <div class="flex flex-col gap-2 text-center">
+                            @if($banner->title)
+                                <h2 class="text-lg font-black tracking-tight leading-snug">
+                                    {{ $banner->title }}
+                                </h2>
+                            @endif
+                            @if($banner->subtitle)
+                                <p class="text-xs text-gray-300">
+                                    {{ $banner->subtitle }}
+                                </p>
+                            @endif
+                            @if($banner->button_text && $banner->button_url)
+                                <div class="pt-1">
+                                    <a
+                                        href="{{ $banner->button_url }}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white font-black text-xs uppercase tracking-wider rounded-base transition shadow"
+                                    >
+                                        <span>{{ $banner->button_text }}</span>
+                                        <span>→</span>
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </section>
     @endif
 

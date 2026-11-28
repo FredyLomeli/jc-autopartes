@@ -15,11 +15,11 @@
 <article class="group flex flex-col h-full justify-between bg-white rounded-lg border border-border hover:border-primary transition-colors shadow-sm overflow-hidden">
     <div class="flex flex-col flex-1">
         <!-- Imagen y Badges Superiores -->
-        <a href="{{ route('catalog.show', $product->slug) }}" class="block relative w-full h-48 bg-surface overflow-hidden border-b border-border rounded-t-lg">
+        <a href="{{ route('catalog.show', $product->slug) }}" class="block relative w-full h-48 bg-white overflow-hidden border-b border-border rounded-t-lg">
             <img
                 src="{{ $product->primary_photo_url }}"
                 alt="{{ $product->title }} ({{ $product->sku }})"
-                class="object-cover w-full h-48 rounded-t-lg group-hover:scale-105 transition-transform duration-300"
+                class="object-contain w-full h-48 p-1.5 rounded-t-lg group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
                 decoding="async"
             >
